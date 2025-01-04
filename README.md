@@ -4,6 +4,7 @@ Includes Vite, React, react-router-dom, styled-components, tailwind, daisyui, po
 
 To use,
 - clone repo
+- git remote remove origin
 - pnpm i
 - vite host
 

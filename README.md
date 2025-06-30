@@ -6,6 +6,6 @@ To use,
 - git clone https://github.com/asyncawaitpromise/starter.git .
 - git remote remove origin
 - pnpm i
-- vite host
+- pnpm host
 
 And you're ready to start working with it!

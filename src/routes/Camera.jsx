@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera as CameraIcon, Image, Trash2, Check, ArrowLeft, RotateCcw, Maximize, Minimize, X } from 'react-feather';
-import { useNavigate } from 'react-router-dom';
+import { Camera as CameraIcon, Image, ArrowLeft, RotateCcw, Maximize, Minimize, X } from 'react-feather';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Camera = () => {
   const navigate = useNavigate();
@@ -10,7 +10,6 @@ const Camera = () => {
   
   const [isStreaming, setIsStreaming] = useState(false);
   const [photos, setPhotos] = useState([]);
-  const [currentView, setCurrentView] = useState('camera'); // 'camera' or 'gallery'
   const [error, setError] = useState('');
   const [facingMode, setFacingMode] = useState('environment'); // 'user' for front, 'environment' for back
   const [debugInfo, setDebugInfo] = useState('');
@@ -262,16 +261,7 @@ const Camera = () => {
     }, 5000);
   };
 
-  // Delete photo
-  const deletePhoto = (photoId) => {
-    setPhotos(prev => prev.filter(photo => photo.id !== photoId));
-  };
 
-  // Convert to sticker (placeholder)
-  const convertToSticker = (photoId) => {
-    // Placeholder function for future sticker conversion
-    alert(`Converting photo ${photoId} to sticker - This feature will be implemented later!`);
-  };
 
   // Test camera availability
   const testCamera = async () => {
@@ -413,26 +403,14 @@ const Camera = () => {
           <span className="text-xl font-bold">Photo Studio</span>
         </div>
         <div className="navbar-end">
-          <div className="btn-group">
-            <button 
-              className={`btn ${currentView === 'camera' ? 'btn-active' : ''}`}
-              onClick={() => setCurrentView('camera')}
-            >
-              <CameraIcon size={16} />
-              Camera
-            </button>
-            <button 
-              className={`btn ${currentView === 'gallery' ? 'btn-active' : ''}`}
-              onClick={() => setCurrentView('gallery')}
-            >
-              <Image size={16} />
-              Gallery ({photos.length})
-            </button>
-          </div>
+          <Link to="/gallery" className="btn btn-outline gap-2">
+            <Image size={16} />
+            Gallery ({photos.length})
+          </Link>
         </div>
       </div>
 
-      {currentView === 'camera' && (
+      {/* Camera Interface */}
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="card bg-base-100 shadow-xl">
@@ -606,12 +584,9 @@ const Camera = () => {
                   <div className="mt-6 text-center">
                     <p className="text-base-content/70">
                       You have {photos.length} photo{photos.length !== 1 ? 's' : ''} saved.{' '}
-                      <button 
-                        className="link link-primary"
-                        onClick={() => setCurrentView('gallery')}
-                      >
+                      <Link to="/gallery" className="link link-primary">
                         View Gallery
-                      </button>
+                      </Link>
                     </p>
                   </div>
                 )}
@@ -619,77 +594,6 @@ const Camera = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {currentView === 'gallery' && (
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="mb-6">
-              <h2 className="text-3xl font-bold mb-2">Photo Gallery</h2>
-              <p className="text-base-content/70">
-                {photos.length === 0 
-                  ? 'No photos captured yet. Go to the camera to take your first photo!'
-                  : `${photos.length} photo${photos.length !== 1 ? 's' : ''} ready for customization.`
-                }
-              </p>
-            </div>
-
-            {photos.length === 0 ? (
-              <div className="card bg-base-100 shadow-xl">
-                <div className="card-body text-center py-16">
-                  <Image size={64} className="mx-auto mb-4 text-base-content/30" />
-                  <h3 className="text-xl font-semibold mb-2">No Photos Yet</h3>
-                  <p className="text-base-content/70 mb-6">
-                    Take your first photo to get started with creating amazing stickers!
-                  </p>
-                  <button 
-                    className="btn btn-primary gap-2"
-                    onClick={() => setCurrentView('camera')}
-                  >
-                    <CameraIcon size={20} />
-                    Take a Photo
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {photos.map((photo) => (
-                  <div key={photo.id} className="card bg-base-100 shadow-xl">
-                    <figure className="aspect-video">
-                      <img 
-                        src={photo.data} 
-                        alt={`Captured ${new Date(photo.timestamp).toLocaleDateString()}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </figure>
-                    <div className="card-body">
-                      <div className="text-sm text-base-content/70 mb-3">
-                        Captured {new Date(photo.timestamp).toLocaleString()}
-                      </div>
-                      <div className="card-actions justify-between">
-                        <button 
-                          className="btn btn-error btn-sm gap-1"
-                          onClick={() => deletePhoto(photo.id)}
-                        >
-                          <Trash2 size={14} />
-                          Delete
-                        </button>
-                        <button 
-                          className="btn btn-primary btn-sm gap-1"
-                          onClick={() => convertToSticker(photo.id)}
-                        >
-                          <Check size={14} />
-                          Make Sticker
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

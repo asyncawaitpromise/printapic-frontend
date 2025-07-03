@@ -333,28 +333,24 @@ const Homepage = () => {
       </footer>
 
       {/* Bottom Navigation */}
-      <div className="btm-nav btm-nav-lg bg-base-100 border-t border-base-300 shadow-lg">
+      <div className="btm-nav bg-base-100 border-t border-base-300 shadow-lg">
         <button className="active text-primary">
-          <Home size={24} />
-          <span className="btm-nav-label">Home</span>
+          <Home size={18} />
         </button>
         <button 
           onClick={() => document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' })}
           className="text-base-content/70 hover:text-primary"
         >
-          <Info size={24} />
-          <span className="btm-nav-label">How It Works</span>
+          <Info size={18} />
         </button>
         <Link to="/camera" className="text-base-content/70 hover:text-primary">
-          <Camera size={24} />
-          <span className="btm-nav-label">Create</span>
+          <Camera size={18} />
         </Link>
         <button 
           onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
           className="text-base-content/70 hover:text-primary"
         >
-          <CreditCard size={24} />
-          <span className="btm-nav-label">Pricing</span>
+          <CreditCard size={18} />
         </button>
       </div>
     </div>

@@ -1,10 +1,8 @@
 import React from 'react';
 import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign } from 'react-feather';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Homepage = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-base-100">
       {/* Navigation */}
@@ -32,12 +30,9 @@ const Homepage = () => {
           </ul>
         </div>
         <div className="navbar-end">
-          <button 
-            className="btn btn-primary"
-            onClick={() => navigate('/camera')}
-          >
+          <Link to="/camera" className="btn btn-primary">
             Start Creating
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -55,13 +50,10 @@ const Homepage = () => {
               stickers right to your door!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button 
-                className="btn btn-primary btn-lg gap-2"
-                onClick={() => navigate('/camera')}
-              >
+              <Link to="/camera" className="btn btn-primary btn-lg gap-2">
                 <Camera size={20} />
                 Get Started with Tokens
-              </button>
+              </Link>
               <button className="btn btn-outline btn-lg gap-2">
                 <Package size={20} />
                 View Examples
@@ -340,14 +332,11 @@ const Homepage = () => {
               amazing stickers. Buy tokens once, use them whenever inspiration strikes!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
-                className="btn btn-neutral btn-lg gap-2"
-                onClick={() => navigate('/camera')}
-              >
+              <Link to="/camera" className="btn btn-neutral btn-lg gap-2">
                 <DollarSign size={20} />
                 Buy Your First Tokens
                 <ArrowRight size={20} />
-              </button>
+              </Link>
               <button className="btn btn-outline btn-lg text-white border-white hover:bg-white hover:text-primary">
                 See Examples
               </button>

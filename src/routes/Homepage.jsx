@@ -1,41 +1,10 @@
 import React from 'react';
-import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign } from 'react-feather';
+import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign, Home, Info, CreditCard } from 'react-feather';
 import { Link } from 'react-router-dom';
 
 const Homepage = () => {
   return (
-    <div className="min-h-screen bg-base-100">
-      {/* Navigation */}
-      <div className="navbar bg-base-100 shadow-sm">
-        <div className="navbar-start">
-          <div className="dropdown">
-            <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16"></path>
-              </svg>
-            </div>
-            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a href="#how-it-works">How It Works</a></li>
-              <li><a href="#features">Features</a></li>
-              <li><a href="#pricing">Pricing</a></li>
-            </ul>
-          </div>
-          <a className="btn btn-ghost text-xl font-bold">Print A Pic</a>
-        </div>
-        <div className="navbar-center hidden lg:flex">
-          <ul className="menu menu-horizontal px-1">
-            <li><a href="#how-it-works" className="text-base-content/70 hover:text-base-content">How It Works</a></li>
-            <li><a href="#features" className="text-base-content/70 hover:text-base-content">Features</a></li>
-            <li><a href="#pricing" className="text-base-content/70 hover:text-base-content">Pricing</a></li>
-          </ul>
-        </div>
-        <div className="navbar-end">
-          <Link to="/camera" className="btn btn-primary">
-            Start Creating
-          </Link>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-base-100 pb-20">
       {/* Hero Section */}
       <div className="hero min-h-[70vh] bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10">
         <div className="hero-content text-center max-w-6xl">
@@ -362,6 +331,32 @@ const Homepage = () => {
           </div>
         </nav>
       </footer>
+
+      {/* Bottom Navigation */}
+      <div className="btm-nav btm-nav-lg bg-base-100 border-t border-base-300 shadow-lg">
+        <button className="active text-primary">
+          <Home size={24} />
+          <span className="btm-nav-label">Home</span>
+        </button>
+        <button 
+          onClick={() => document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' })}
+          className="text-base-content/70 hover:text-primary"
+        >
+          <Info size={24} />
+          <span className="btm-nav-label">How It Works</span>
+        </button>
+        <Link to="/camera" className="text-base-content/70 hover:text-primary">
+          <Camera size={24} />
+          <span className="btm-nav-label">Create</span>
+        </Link>
+        <button 
+          onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
+          className="text-base-content/70 hover:text-primary"
+        >
+          <CreditCard size={24} />
+          <span className="btm-nav-label">Pricing</span>
+        </button>
+      </div>
     </div>
   );
 };

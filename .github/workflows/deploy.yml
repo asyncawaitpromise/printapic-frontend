@@ -18,15 +18,15 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "8"
+          run_install: false
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 8
-          run_install: false
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build --if-present
       - run: pnpm run test --if-present

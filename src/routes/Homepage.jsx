@@ -38,12 +38,12 @@ const Homepage = () => {
         <div className="hero-content text-center max-w-6xl">
           <div>
             <h1 className="text-6xl font-bold leading-tight mb-6">
-              AI-Powered Photo Customization & 
+              Magical Photo Customization & 
               <span className="text-primary"> Sticker Printing</span>
             </h1>
             <p className="text-xl text-base-content/70 mb-8 max-w-3xl mx-auto">
-              Use our token-based system to customize photos with AI and print high-quality stickers. 
-              Just 2 tokens to enhance any photo with AI, and 400 tokens to print and ship beautiful 
+              Use our token-based system to customize photos with magic and print high-quality stickers. 
+              Just 2 tokens to enhance any photo with magic, and 400 tokens to print and ship beautiful 
               stickers right to your door!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -64,7 +64,7 @@ const Homepage = () => {
               <span>•</span>
               <span>Token-based pricing</span>
               <span>•</span>
-              <span>AI photo enhancement</span>
+              <span>Magic photo enhancement</span>
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@ const Homepage = () => {
                 <h3 className="card-title justify-center text-2xl mb-3">1. Buy Tokens</h3>
                 <p className="text-base-content/70">
                   Purchase tokens to power your creations. $10 gets you 1,000 tokens - 
-                  enough for hundreds of AI customizations or multiple printed stickers.
+                  enough for hundreds of magic customizations or multiple printed stickers.
                 </p>
               </div>
             </div>
@@ -100,9 +100,9 @@ const Homepage = () => {
                 <div className="mx-auto mb-4 w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center">
                   <Zap size={32} className="text-secondary" />
                 </div>
-                <h3 className="card-title justify-center text-2xl mb-3">2. Customize with AI</h3>
+                <h3 className="card-title justify-center text-2xl mb-3">2. Customize with Magic</h3>
                 <p className="text-base-content/70">
-                  Upload your photo and use just 2 tokens to let our AI enhance it - 
+                  Upload your photo and use just 2 tokens to let our magic enhance it - 
                   remove backgrounds, adjust colors, add effects, and more!
                 </p>
               </div>
@@ -145,7 +145,7 @@ const Homepage = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-2">Token-Based Pricing</h3>
                 <p className="text-base-content/70">
-                  Pay only for what you use. No subscriptions, no waste. 2 tokens for AI customization, 400 for printing.
+                  Pay only for what you use. No subscriptions, no waste. 2 tokens for magic customization, 400 for printing.
                 </p>
               </div>
             </div>
@@ -157,9 +157,9 @@ const Homepage = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">AI Photo Enhancement</h3>
+                <h3 className="text-xl font-semibold mb-2">Magic Photo Enhancement</h3>
                 <p className="text-base-content/70">
-                  Advanced AI removes backgrounds, enhances colors, and optimizes your photos for just 2 tokens.
+                  Advanced magic removes backgrounds, enhances colors, and optimizes your photos for just 2 tokens.
                 </p>
               </div>
             </div>
@@ -241,7 +241,7 @@ const Homepage = () => {
                 <div className="text-2xl font-semibold text-secondary mb-4">1,000 Tokens</div>
                 <p className="text-base-content/70 mb-6">Perfect for trying us out</p>
                 <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 500 AI customizations (2 tokens each)</li>
+                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 500 magic customizations (2 tokens each)</li>
                   <li className="flex items-center gap-2"><Package size={16} className="text-primary" /> 2 printed stickers (400 tokens each)</li>
                   <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Mix and match as you like</li>
                   <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Tokens never expire</li>
@@ -258,7 +258,7 @@ const Homepage = () => {
                 <div className="text-2xl font-semibold text-secondary mb-4">2,750 Tokens</div>
                 <p className="text-base-content/70 mb-6">10% bonus tokens included!</p>
                 <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 1,375 AI customizations</li>
+                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 1,375 magic customizations</li>
                   <li className="flex items-center gap-2"><Package size={16} className="text-primary" /> 6 printed stickers</li>
                   <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Bonus 250 tokens FREE</li>
                   <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Priority support</li>
@@ -275,7 +275,7 @@ const Homepage = () => {
                 <div className="text-2xl font-semibold text-secondary mb-4">6,000 Tokens</div>
                 <p className="text-base-content/70 mb-6">20% bonus tokens included!</p>
                 <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 3,000 AI customizations</li>
+                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 3,000 magic customizations</li>
                   <li className="flex items-center gap-2"><Package size={16} className="text-primary" /> 15 printed stickers</li>
                   <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Bonus 1,000 tokens FREE</li>
                   <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Premium support</li>
@@ -296,11 +296,11 @@ const Homepage = () => {
                     <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
                       <Zap size={24} className="text-secondary" />
                     </div>
-                    <div>
-                      <div className="font-semibold">AI Photo Customization</div>
-                      <div className="text-2xl font-bold text-secondary">2 Tokens</div>
-                      <div className="text-sm text-base-content/70">Remove backgrounds, enhance colors, add effects</div>
-                    </div>
+                                         <div>
+                       <div className="font-semibold">Magic Photo Customization</div>
+                       <div className="text-2xl font-bold text-secondary">2 Tokens</div>
+                       <div className="text-sm text-base-content/70">Remove backgrounds, enhance colors, add effects</div>
+                     </div>
                   </div>
                   <div className="flex items-center gap-4 p-4 bg-base-100 rounded-lg">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
@@ -347,7 +347,7 @@ const Homepage = () => {
         <aside>
           <Heart size={32} className="text-primary" />
           <p className="font-bold text-lg">Print A Pic</p>
-          <p>AI-powered photo customization and sticker printing since 2024</p>
+          <p>Magical photo customization and sticker printing since 2024</p>
           <p>Copyright © 2024 - All rights reserved</p>
         </aside>
         <nav>

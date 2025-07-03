@@ -335,22 +335,22 @@ const Homepage = () => {
       {/* Bottom Navigation */}
       <div className="btm-nav bg-base-100 border-t border-base-300 shadow-lg">
         <button className="active text-primary">
-          <Home size={18} />
+          <Home size={22} />
         </button>
         <button 
           onClick={() => document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' })}
           className="text-base-content/70 hover:text-primary"
         >
-          <Info size={18} />
+          <Info size={22} />
         </button>
         <Link to="/camera" className="text-base-content/70 hover:text-primary">
-          <Camera size={18} />
+          <Camera size={22} />
         </Link>
         <button 
           onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
           className="text-base-content/70 hover:text-primary"
         >
-          <CreditCard size={18} />
+          <CreditCard size={22} />
         </button>
       </div>
     </div>

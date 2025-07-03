@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, Coins } from 'react-feather';
+import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign } from 'react-feather';
 
 const Homepage = () => {
   return (
@@ -85,7 +85,7 @@ const Homepage = () => {
             <div className="card bg-base-100 shadow-lg">
               <div className="card-body text-center">
                 <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Coins size={32} className="text-primary" />
+                  <DollarSign size={32} className="text-primary" />
                 </div>
                 <h3 className="card-title justify-center text-2xl mb-3">1. Buy Tokens</h3>
                 <p className="text-base-content/70">
@@ -139,7 +139,7 @@ const Homepage = () => {
             <div className="flex gap-4">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Coins size={24} className="text-primary" />
+                  <DollarSign size={24} className="text-primary" />
                 </div>
               </div>
               <div>
@@ -330,7 +330,7 @@ const Homepage = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="btn btn-neutral btn-lg gap-2">
-                <Coins size={20} />
+                <DollarSign size={20} />
                 Buy Your First Tokens
                 <ArrowRight size={20} />
               </button>

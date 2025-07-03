@@ -357,20 +357,22 @@ const Camera = () => {
                 )}
 
                 <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
-                  {isStreaming ? (
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full h-full object-cover"
-                      onLoadedData={() => console.log('🎥 Video onLoadedData fired')}
-                      onLoadStart={() => console.log('🎥 Video onLoadStart fired')}
-                      onCanPlay={() => console.log('🎥 Video onCanPlay fired')}
-                      onPlaying={() => console.log('🎥 Video onPlaying fired')}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white">
+                  {/* Always render video element, but control visibility */}
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`w-full h-full object-cover ${isStreaming ? 'block' : 'hidden'}`}
+                    onLoadedData={() => console.log('🎥 Video onLoadedData fired')}
+                    onLoadStart={() => console.log('🎥 Video onLoadStart fired')}
+                    onCanPlay={() => console.log('🎥 Video onCanPlay fired')}
+                    onPlaying={() => console.log('🎥 Video onPlaying fired')}
+                  />
+                  
+                  {/* Show placeholder when not streaming */}
+                  {!isStreaming && (
+                    <div className="absolute inset-0 w-full h-full flex items-center justify-center text-white">
                       <div className="text-center">
                         <CameraIcon size={64} className="mx-auto mb-4 opacity-50" />
                         <p className="text-lg">Camera not active</p>

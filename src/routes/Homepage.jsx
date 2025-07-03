@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Package, Zap, Heart, Star, ArrowRight, Check } from 'react-feather';
+import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign } from 'react-feather';
 
 const Homepage = () => {
   return (
@@ -19,7 +19,7 @@ const Homepage = () => {
               <li><a href="#pricing">Pricing</a></li>
             </ul>
           </div>
-          <a className="btn btn-ghost text-xl font-bold">StickerSnap</a>
+          <a className="btn btn-ghost text-xl font-bold">Print A Pic</a>
         </div>
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal px-1">
@@ -38,18 +38,18 @@ const Homepage = () => {
         <div className="hero-content text-center max-w-6xl">
           <div>
             <h1 className="text-6xl font-bold leading-tight mb-6">
-              Turn Any Photo Into 
-              <span className="text-primary"> Custom Stickers</span>
+              Magical Photo Customization & 
+              <span className="text-primary"> Sticker Printing</span>
             </h1>
             <p className="text-xl text-base-content/70 mb-8 max-w-3xl mx-auto">
-              Snap a photo of anything you love and we'll transform it into high-quality, 
-              weather-resistant stickers delivered right to your door. Perfect for personalizing 
-              your laptop, water bottle, car, or anywhere you want to add some personality!
+              Use our token-based system to customize photos with magic and print high-quality stickers. 
+              Just 2 tokens to enhance any photo with magic, and 400 tokens to print and ship beautiful 
+              stickers right to your door!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button className="btn btn-primary btn-lg gap-2">
                 <Camera size={20} />
-                Create Your Stickers
+                Get Started with Tokens
               </button>
               <button className="btn btn-outline btn-lg gap-2">
                 <Package size={20} />
@@ -62,9 +62,9 @@ const Homepage = () => {
                 <span>4.9/5 rating</span>
               </div>
               <span>•</span>
-              <span>50,000+ happy customers</span>
+              <span>Token-based pricing</span>
               <span>•</span>
-              <span>Free shipping on orders $25+</span>
+              <span>Magic photo enhancement</span>
             </div>
           </div>
         </div>
@@ -76,7 +76,8 @@ const Homepage = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">How It Works</h2>
             <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
-              Creating your custom stickers is as easy as 1-2-3. Get professional-quality results in just a few clicks.
+              Our simple token system makes it easy to customize photos and order stickers. 
+              Use tokens for exactly what you need, when you need it.
             </p>
           </div>
           
@@ -84,12 +85,12 @@ const Homepage = () => {
             <div className="card bg-base-100 shadow-lg">
               <div className="card-body text-center">
                 <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Camera size={32} className="text-primary" />
+                  <DollarSign size={32} className="text-primary" />
                 </div>
-                <h3 className="card-title justify-center text-2xl mb-3">1. Take a Photo</h3>
+                <h3 className="card-title justify-center text-2xl mb-3">1. Buy Tokens</h3>
                 <p className="text-base-content/70">
-                  Upload any photo from your device or take a new one. Our AI will automatically 
-                  remove backgrounds and enhance your image for the perfect sticker.
+                  Purchase tokens to power your creations. $10 gets you 1,000 tokens - 
+                  enough for hundreds of magic customizations or multiple printed stickers.
                 </p>
               </div>
             </div>
@@ -99,10 +100,10 @@ const Homepage = () => {
                 <div className="mx-auto mb-4 w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center">
                   <Zap size={32} className="text-secondary" />
                 </div>
-                <h3 className="card-title justify-center text-2xl mb-3">2. Customize</h3>
+                <h3 className="card-title justify-center text-2xl mb-3">2. Customize with Magic</h3>
                 <p className="text-base-content/70">
-                  Choose your size, quantity, and style. Add text, adjust colors, or use our 
-                  templates to make your stickers uniquely yours.
+                  Upload your photo and use just 2 tokens to let our magic enhance it - 
+                  remove backgrounds, adjust colors, add effects, and more!
                 </p>
               </div>
             </div>
@@ -112,10 +113,10 @@ const Homepage = () => {
                 <div className="mx-auto mb-4 w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center">
                   <Package size={32} className="text-accent" />
                 </div>
-                <h3 className="card-title justify-center text-2xl mb-3">3. Receive</h3>
+                <h3 className="card-title justify-center text-2xl mb-3">3. Print & Ship</h3>
                 <p className="text-base-content/70">
-                  We print your stickers on premium vinyl and ship them to your door. 
-                  Most orders arrive within 3-5 business days.
+                  Use 400 tokens to turn your customized photo into a premium sticker 
+                  and have it shipped directly to you. Quality guaranteed!
                 </p>
               </div>
             </div>
@@ -127,9 +128,10 @@ const Homepage = () => {
       <div id="features" className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Choose StickerSnap?</h2>
+            <h2 className="text-4xl font-bold mb-4">Why Choose Print A Pic?</h2>
             <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
-              We're not just another sticker company. Here's what makes us different.
+              Our token-based system gives you complete control over your spending while delivering 
+              professional results every time.
             </p>
           </div>
 
@@ -137,13 +139,13 @@ const Homepage = () => {
             <div className="flex gap-4">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Check size={24} className="text-primary" />
+                  <DollarSign size={24} className="text-primary" />
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">Premium Quality</h3>
+                <h3 className="text-xl font-semibold mb-2">Token-Based Pricing</h3>
                 <p className="text-base-content/70">
-                  Weather-resistant vinyl that lasts years, not months. UV-resistant inks that won't fade.
+                  Pay only for what you use. No subscriptions, no waste. 2 tokens for magic customization, 400 for printing.
                 </p>
               </div>
             </div>
@@ -151,13 +153,13 @@ const Homepage = () => {
             <div className="flex gap-4">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                  <Check size={24} className="text-secondary" />
+                  <Zap size={24} className="text-secondary" />
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">AI Background Removal</h3>
+                <h3 className="text-xl font-semibold mb-2">Magic Photo Enhancement</h3>
                 <p className="text-base-content/70">
-                  Our smart AI automatically removes backgrounds and cleans up your images for perfect results.
+                  Advanced magic removes backgrounds, enhances colors, and optimizes your photos for just 2 tokens.
                 </p>
               </div>
             </div>
@@ -169,9 +171,9 @@ const Homepage = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">Fast Shipping</h3>
+                <h3 className="text-xl font-semibold mb-2">Premium Quality</h3>
                 <p className="text-base-content/70">
-                  Free shipping on orders over $25. Most orders ship within 24 hours.
+                  Weather-resistant vinyl stickers with UV-resistant inks that last years, not months.
                 </p>
               </div>
             </div>
@@ -179,13 +181,13 @@ const Homepage = () => {
             <div className="flex gap-4">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Check size={24} className="text-primary" />
+                  <Package size={24} className="text-primary" />
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">Multiple Sizes</h3>
+                <h3 className="text-xl font-semibold mb-2">Fast Shipping</h3>
                 <p className="text-base-content/70">
-                  From tiny laptop stickers to large car decals. Choose from 8 different sizes.
+                  Your printed stickers ship within 24 hours. Most orders arrive within 3-5 business days.
                 </p>
               </div>
             </div>
@@ -197,9 +199,9 @@ const Homepage = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">Easy Application</h3>
+                <h3 className="text-xl font-semibold mb-2">Flexible Sizing</h3>
                 <p className="text-base-content/70">
-                  Bubble-free application with strong adhesive that removes cleanly when needed.
+                  Choose from multiple sticker sizes to fit laptops, water bottles, cars, or anywhere you want.
                 </p>
               </div>
             </div>
@@ -207,13 +209,13 @@ const Homepage = () => {
             <div className="flex gap-4">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                  <Check size={24} className="text-accent" />
+                  <Heart size={24} className="text-accent" />
                 </div>
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">100% Guarantee</h3>
                 <p className="text-base-content/70">
-                  Not happy with your stickers? We'll remake them for free or give you a full refund.
+                  Not happy with your results? We'll refund your tokens or remake your order for free.
                 </p>
               </div>
             </div>
@@ -225,9 +227,9 @@ const Homepage = () => {
       <div id="pricing" className="py-20 bg-base-200/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <h2 className="text-4xl font-bold mb-4">Simple Token Pricing</h2>
             <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
-              No hidden fees, no subscriptions. Just great stickers at fair prices.
+              Buy tokens once, use them as you need. No subscriptions, no hidden fees.
             </p>
           </div>
 
@@ -235,48 +237,82 @@ const Homepage = () => {
             <div className="card bg-base-100 shadow-lg">
               <div className="card-body text-center">
                 <h3 className="text-2xl font-bold mb-2">Starter Pack</h3>
-                <div className="text-4xl font-bold text-primary mb-4">$12</div>
+                <div className="text-4xl font-bold text-primary mb-4">$10</div>
+                <div className="text-2xl font-semibold text-secondary mb-4">1,000 Tokens</div>
                 <p className="text-base-content/70 mb-6">Perfect for trying us out</p>
                 <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> 10 stickers</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> 2" x 2" size</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> AI background removal</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> Standard shipping</li>
+                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 500 magic customizations (2 tokens each)</li>
+                  <li className="flex items-center gap-2"><Package size={16} className="text-primary" /> 2 printed stickers (400 tokens each)</li>
+                  <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Mix and match as you like</li>
+                  <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Tokens never expire</li>
                 </ul>
-                <button className="btn btn-outline btn-block">Get Started</button>
+                <button className="btn btn-outline btn-block">Buy 1,000 Tokens</button>
               </div>
             </div>
 
             <div className="card bg-base-100 shadow-lg border-2 border-primary">
               <div className="card-body text-center">
-                <div className="badge badge-primary badge-lg absolute -top-3 left-1/2 transform -translate-x-1/2">Most Popular</div>
+                <div className="badge badge-primary badge-lg absolute -top-3 left-1/2 transform -translate-x-1/2">Best Value</div>
                 <h3 className="text-2xl font-bold mb-2">Creator Pack</h3>
-                <div className="text-4xl font-bold text-primary mb-4">$28</div>
-                <p className="text-base-content/70 mb-6">Best value for creators</p>
+                <div className="text-4xl font-bold text-primary mb-4">$25</div>
+                <div className="text-2xl font-semibold text-secondary mb-4">2,750 Tokens</div>
+                <p className="text-base-content/70 mb-6">10% bonus tokens included!</p>
                 <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> 50 stickers</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> Multiple sizes</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> AI background removal</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> Free shipping</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> Priority support</li>
+                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 1,375 magic customizations</li>
+                  <li className="flex items-center gap-2"><Package size={16} className="text-primary" /> 6 printed stickers</li>
+                  <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Bonus 250 tokens FREE</li>
+                  <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Priority support</li>
+                  <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Tokens never expire</li>
                 </ul>
-                <button className="btn btn-primary btn-block">Choose Creator</button>
+                <button className="btn btn-primary btn-block">Buy 2,750 Tokens</button>
               </div>
             </div>
 
             <div className="card bg-base-100 shadow-lg">
               <div className="card-body text-center">
-                <h3 className="text-2xl font-bold mb-2">Business Pack</h3>
-                <div className="text-4xl font-bold text-primary mb-4">$89</div>
-                <p className="text-base-content/70 mb-6">For teams and businesses</p>
+                <h3 className="text-2xl font-bold mb-2">Pro Pack</h3>
+                <div className="text-4xl font-bold text-primary mb-4">$50</div>
+                <div className="text-2xl font-semibold text-secondary mb-4">6,000 Tokens</div>
+                <p className="text-base-content/70 mb-6">20% bonus tokens included!</p>
                 <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> 200 stickers</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> All sizes available</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> AI background removal</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> Free expedited shipping</li>
-                  <li className="flex items-center gap-2"><Check size={16} className="text-primary" /> Dedicated support</li>
+                  <li className="flex items-center gap-2"><Zap size={16} className="text-secondary" /> 3,000 magic customizations</li>
+                  <li className="flex items-center gap-2"><Package size={16} className="text-primary" /> 15 printed stickers</li>
+                  <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Bonus 1,000 tokens FREE</li>
+                  <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Premium support</li>
+                  <li className="flex items-center gap-2"><Check size={16} className="text-accent" /> Tokens never expire</li>
                 </ul>
-                <button className="btn btn-outline btn-block">Choose Business</button>
+                <button className="btn btn-outline btn-block">Buy 6,000 Tokens</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Token Usage Examples */}
+          <div className="mt-16 max-w-4xl mx-auto">
+            <div className="card bg-primary/5 border border-primary/20">
+              <div className="card-body">
+                <h3 className="text-2xl font-bold text-center mb-6">How to Use Your Tokens</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-center gap-4 p-4 bg-base-100 rounded-lg">
+                    <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
+                      <Zap size={24} className="text-secondary" />
+                    </div>
+                                         <div>
+                       <div className="font-semibold">Magic Photo Customization</div>
+                       <div className="text-2xl font-bold text-secondary">2 Tokens</div>
+                       <div className="text-sm text-base-content/70">Remove backgrounds, enhance colors, add effects</div>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 bg-base-100 rounded-lg">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Package size={24} className="text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">Print & Ship Sticker</div>
+                      <div className="text-2xl font-bold text-primary">400 Tokens</div>
+                      <div className="text-sm text-base-content/70">High-quality vinyl sticker delivered to you</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -287,19 +323,19 @@ const Homepage = () => {
       <div className="py-20 bg-gradient-to-r from-primary to-secondary">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto text-white">
-            <h2 className="text-4xl font-bold mb-4">Ready to Create Amazing Stickers?</h2>
+            <h2 className="text-4xl font-bold mb-4">Ready to Start Creating?</h2>
             <p className="text-xl mb-8 opacity-90">
-              Join thousands of creators who trust StickerSnap for their custom sticker needs. 
-              Start your first order today and see the difference quality makes.
+              Join thousands of creators using our token-based system to customize photos and create 
+              amazing stickers. Buy tokens once, use them whenever inspiration strikes!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="btn btn-neutral btn-lg gap-2">
-                <Camera size={20} />
-                Start Creating Now
+                <DollarSign size={20} />
+                Buy Your First Tokens
                 <ArrowRight size={20} />
               </button>
               <button className="btn btn-outline btn-lg text-white border-white hover:bg-white hover:text-primary">
-                View Gallery
+                See Examples
               </button>
             </div>
           </div>
@@ -310,8 +346,8 @@ const Homepage = () => {
       <footer className="footer footer-center p-10 bg-base-200 text-base-content">
         <aside>
           <Heart size={32} className="text-primary" />
-          <p className="font-bold text-lg">StickerSnap</p>
-          <p>Turn your memories into stickers since 2024</p>
+          <p className="font-bold text-lg">Print A Pic</p>
+          <p>Magical photo customization and sticker printing since 2024</p>
           <p>Copyright © 2024 - All rights reserved</p>
         </aside>
         <nav>

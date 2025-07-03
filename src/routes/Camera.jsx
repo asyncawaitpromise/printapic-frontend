@@ -13,16 +13,28 @@ const Camera = () => {
   const [currentView, setCurrentView] = useState('camera'); // 'camera' or 'gallery'
   const [error, setError] = useState('');
   const [facingMode, setFacingMode] = useState('environment'); // 'user' for front, 'environment' for back
+  const [debugInfo, setDebugInfo] = useState('');
 
   // Load photos from localStorage on component mount
   useEffect(() => {
+    console.log('🎬 Camera component mounted');
+    console.log('🔍 Browser support check:');
+    console.log('🔍 navigator.mediaDevices:', !!navigator.mediaDevices);
+    console.log('🔍 getUserMedia:', !!navigator.mediaDevices?.getUserMedia);
+    console.log('🔍 User agent:', navigator.userAgent);
+    console.log('🔍 Protocol:', window.location.protocol);
+    
     const savedPhotos = localStorage.getItem('captured-photos');
     if (savedPhotos) {
       try {
-        setPhotos(JSON.parse(savedPhotos));
+        const parsedPhotos = JSON.parse(savedPhotos);
+        console.log('📸 Loaded photos from localStorage:', parsedPhotos.length, 'photos');
+        setPhotos(parsedPhotos);
       } catch (e) {
-        console.error('Error loading photos from localStorage:', e);
+        console.error('📸 Error loading photos from localStorage:', e);
       }
+    } else {
+      console.log('📸 No saved photos found in localStorage');
     }
   }, []);
 
@@ -34,38 +46,142 @@ const Camera = () => {
   // Start camera stream
   const startCamera = async () => {
     try {
+      console.log('🎥 Starting camera...');
       setError('');
-      const stream = await navigator.mediaDevices.getUserMedia({
+      
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia is not supported in this browser');
+      }
+      
+      console.log('🎥 Requesting camera with facingMode:', facingMode);
+      
+      const constraints = {
         video: { 
           facingMode: facingMode,
           width: { ideal: 1280 },
           height: { ideal: 720 }
         },
         audio: false
-      });
+      };
+      
+      console.log('🎥 Camera constraints:', constraints);
+      
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('🎥 Got media stream with constraints:', stream);
+      } catch (constraintError) {
+        console.log('🎥 Failed with facingMode constraint, trying without it:', constraintError.name);
+        // Try without facingMode constraint as fallback
+        const fallbackConstraints = {
+          video: { 
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        };
+        stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+        console.log('🎥 Got media stream with fallback constraints:', stream);
+      }
+      console.log('🎥 Video tracks:', stream.getVideoTracks());
       
       if (videoRef.current) {
+        console.log('🎥 Setting stream to video element');
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
+        
+        // Add event listeners to video element for debugging
+        videoRef.current.onloadedmetadata = () => {
+          console.log('🎥 Video metadata loaded');
+          console.log('🎥 Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+        };
+        
+        videoRef.current.oncanplay = () => {
+          console.log('🎥 Video can start playing');
+        };
+        
+        videoRef.current.onplay = () => {
+          console.log('🎥 Video started playing');
+        };
+        
+        videoRef.current.onerror = (e) => {
+          console.error('🎥 Video element error:', e);
+        };
+        
+        // Try to play the video
+        try {
+          await videoRef.current.play();
+          console.log('🎥 Video play() succeeded');
+        } catch (playError) {
+          console.log('🎥 Video play() failed, but this might be OK:', playError);
+        }
+        
         setIsStreaming(true);
+        console.log('🎥 Camera started successfully');
+      } else {
+        console.error('🎥 Video ref is null');
+        throw new Error('Video element not found');
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setError('Unable to access camera. Please ensure you have granted camera permissions.');
+      console.error('🎥 Error accessing camera:', err);
+      console.error('🎥 Error name:', err.name);
+      console.error('🎥 Error message:', err.message);
+      
+      let errorMessage = 'Unable to access camera. ';
+      
+      switch (err.name) {
+        case 'NotAllowedError':
+        case 'PermissionDeniedError':
+          errorMessage += 'Please grant camera permissions and refresh the page.';
+          break;
+        case 'NotFoundError':
+        case 'DevicesNotFoundError':
+          errorMessage += 'No camera found on this device.';
+          break;
+        case 'NotReadableError':
+        case 'TrackStartError':
+          errorMessage += 'Camera is already in use by another application.';
+          break;
+        case 'OverconstrainedError':
+        case 'ConstraintNotSatisfiedError':
+          errorMessage += 'Camera does not support the requested settings.';
+          break;
+        case 'NotSupportedError':
+          errorMessage += 'Camera is not supported in this browser.';
+          break;
+        case 'TypeError':
+          errorMessage += 'Camera access is not supported in this browser.';
+          break;
+        default:
+          errorMessage += `Error: ${err.message}`;
+      }
+      
+      setError(errorMessage);
     }
   };
 
   // Stop camera stream
   const stopCamera = () => {
+    console.log('🛑 Stopping camera...');
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      console.log('🛑 Stopping tracks:', streamRef.current.getTracks());
+      streamRef.current.getTracks().forEach(track => {
+        console.log('🛑 Stopping track:', track);
+        track.stop();
+      });
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setIsStreaming(false);
+    console.log('🛑 Camera stopped');
   };
 
   // Switch between front and back camera
   const switchCamera = () => {
+    console.log('🔄 Switching camera from', facingMode, 'to', facingMode === 'user' ? 'environment' : 'user');
     stopCamera();
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
@@ -73,27 +189,41 @@ const Camera = () => {
   // Restart camera with new facing mode
   useEffect(() => {
     if (isStreaming) {
+      console.log('🔄 Restarting camera with new facing mode:', facingMode);
       startCamera();
     }
   }, [facingMode]);
 
   // Capture photo
   const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    console.log('📸 Capturing photo...');
+    
+    if (!videoRef.current || !canvasRef.current) {
+      console.error('📸 Video or canvas ref is null');
+      console.log('📸 videoRef.current:', videoRef.current);
+      console.log('📸 canvasRef.current:', canvasRef.current);
+      return;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
+    console.log('📸 Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+    console.log('📸 Video ready state:', video.readyState);
+
     // Set canvas dimensions to match video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
+    console.log('📸 Canvas dimensions set to:', canvas.width, 'x', canvas.height);
 
     // Draw the video frame to canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     // Convert canvas to base64 image
     const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    console.log('📸 Image data length:', imageData.length);
     
     // Create photo object with metadata
     const newPhoto = {
@@ -104,8 +234,14 @@ const Camera = () => {
       height: canvas.height
     };
 
+    console.log('📸 New photo created:', newPhoto.id, newPhoto.width + 'x' + newPhoto.height);
+
     // Add to photos array
-    setPhotos(prev => [newPhoto, ...prev]);
+    setPhotos(prev => {
+      const updated = [newPhoto, ...prev];
+      console.log('📸 Photos array updated, total count:', updated.length);
+      return updated;
+    });
   };
 
   // Delete photo
@@ -117,6 +253,45 @@ const Camera = () => {
   const convertToSticker = (photoId) => {
     // Placeholder function for future sticker conversion
     alert(`Converting photo ${photoId} to sticker - This feature will be implemented later!`);
+  };
+
+  // Test camera availability
+  const testCamera = async () => {
+    console.log('🧪 Testing camera availability...');
+    setDebugInfo('Testing camera...');
+    
+    try {
+      // Check basic support
+      if (!navigator.mediaDevices) {
+        throw new Error('navigator.mediaDevices not available');
+      }
+      
+      if (!navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia not available');
+      }
+      
+      // Check available devices
+      if (navigator.mediaDevices.enumerateDevices) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        console.log('🧪 Available video devices:', videoDevices);
+        setDebugInfo(`Found ${videoDevices.length} video devices`);
+      }
+      
+      // Test basic getUserMedia without constraints
+      console.log('🧪 Testing basic getUserMedia...');
+      const testStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      console.log('🧪 Basic getUserMedia works!', testStream);
+      
+      // Clean up test stream
+      testStream.getTracks().forEach(track => track.stop());
+      
+      setDebugInfo('Camera test successful!');
+      
+    } catch (error) {
+      console.error('🧪 Camera test failed:', error);
+      setDebugInfo(`Camera test failed: ${error.message}`);
+    }
   };
 
   // Clean up stream on component unmount
@@ -175,6 +350,12 @@ const Camera = () => {
                   </div>
                 )}
 
+                {debugInfo && (
+                  <div className="alert alert-info mb-4">
+                    <span>{debugInfo}</span>
+                  </div>
+                )}
+
                 <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
                   {isStreaming ? (
                     <video
@@ -183,6 +364,10 @@ const Camera = () => {
                       playsInline
                       muted
                       className="w-full h-full object-cover"
+                      onLoadedData={() => console.log('🎥 Video onLoadedData fired')}
+                      onLoadStart={() => console.log('🎥 Video onLoadStart fired')}
+                      onCanPlay={() => console.log('🎥 Video onCanPlay fired')}
+                      onPlaying={() => console.log('🎥 Video onPlaying fired')}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white">
@@ -196,13 +381,32 @@ const Camera = () => {
                   
                   {/* Camera controls overlay */}
                   {isStreaming && (
-                    <div className="absolute top-4 right-4">
+                    <div className="absolute top-4 right-4 flex gap-2">
                       <button
                         className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={switchCamera}
                         title="Switch Camera"
                       >
                         <RotateCcw size={16} />
+                      </button>
+                      {/* Debug button */}
+                      <button
+                        className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                        onClick={() => {
+                          console.log('🔍 DEBUG INFO:');
+                          console.log('🔍 Video element:', videoRef.current);
+                          console.log('🔍 Video srcObject:', videoRef.current?.srcObject);
+                          console.log('🔍 Video readyState:', videoRef.current?.readyState);
+                          console.log('🔍 Video paused:', videoRef.current?.paused);
+                          console.log('🔍 Video videoWidth:', videoRef.current?.videoWidth);
+                          console.log('🔍 Video videoHeight:', videoRef.current?.videoHeight);
+                          console.log('🔍 Stream ref:', streamRef.current);
+                          console.log('🔍 Stream active:', streamRef.current?.active);
+                          console.log('🔍 Stream tracks:', streamRef.current?.getTracks());
+                        }}
+                        title="Debug Info"
+                      >
+                        ?
                       </button>
                     </div>
                   )}
@@ -213,13 +417,21 @@ const Camera = () => {
 
                 <div className="flex flex-col sm:flex-row gap-4 mt-6 justify-center">
                   {!isStreaming ? (
-                    <button 
-                      className="btn btn-primary btn-lg gap-2"
-                      onClick={startCamera}
-                    >
-                      <CameraIcon size={20} />
-                      Start Camera
-                    </button>
+                    <>
+                      <button 
+                        className="btn btn-primary btn-lg gap-2"
+                        onClick={startCamera}
+                      >
+                        <CameraIcon size={20} />
+                        Start Camera
+                      </button>
+                      <button 
+                        className="btn btn-outline btn-lg gap-2"
+                        onClick={testCamera}
+                      >
+                        🧪 Test Camera
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button 

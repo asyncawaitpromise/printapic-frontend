@@ -53,32 +53,39 @@ const Gallery = () => {
   return (
     <div className="min-h-screen bg-base-100">
       {/* Navigation */}
-      <div className="navbar bg-base-100 shadow-sm">
+      <div className="navbar bg-base-100 shadow-sm px-2 sm:px-4">
         <div className="navbar-start">
           <button 
-            className="btn btn-ghost gap-2"
+            className="btn btn-ghost btn-sm sm:btn-md gap-1 sm:gap-2 min-h-0 h-auto"
             onClick={() => navigate(-1)}
           >
-            <ArrowLeft size={20} />
-            Back
+            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Back</span>
           </button>
         </div>
-        <div className="navbar-center">
-          <span className="text-xl font-bold">Photo Gallery</span>
+        <div className="navbar-center flex-1 px-2">
+          <span className="text-lg sm:text-xl font-bold truncate">Gallery</span>
         </div>
         <div className="navbar-end">
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2">
             {photos.length > 0 && (
               <button 
-                className="btn btn-outline btn-error btn-sm"
+                className="btn btn-outline btn-error btn-sm min-h-0 h-auto px-2 sm:px-4"
                 onClick={clearAllPhotos}
+                title="Clear All Photos"
               >
-                Clear All
+                <Trash2 size={16} className="sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline ml-1">Clear</span>
               </button>
             )}
-            <Link to="/camera" className="btn btn-primary gap-2">
-              <CameraIcon size={16} />
-              Take Photos
+            <Link 
+              to="/camera" 
+              className="btn btn-primary btn-sm min-h-0 h-auto px-2 sm:px-4"
+              title="Take Photos"
+            >
+              <CameraIcon size={16} className="sm:w-4 sm:h-4" />
+              <span className="hidden md:inline ml-1">Take Photos</span>
+              <span className="hidden sm:inline md:hidden ml-1">Take</span>
             </Link>
           </div>
         </div>

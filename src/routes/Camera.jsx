@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera as CameraIcon, Image, Trash2, Check, ArrowLeft, RotateCcw } from 'react-feather';
+import { Camera as CameraIcon, Image, Trash2, Check, ArrowLeft, RotateCcw, Maximize, Minimize, X } from 'react-feather';
 import { useNavigate } from 'react-router-dom';
 
 const Camera = () => {
@@ -14,6 +14,10 @@ const Camera = () => {
   const [error, setError] = useState('');
   const [facingMode, setFacingMode] = useState('environment'); // 'user' for front, 'environment' for back
   const [debugInfo, setDebugInfo] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [lastCapturedPhoto, setLastCapturedPhoto] = useState(null);
+  const [showFlash, setShowFlash] = useState(false);
+  const containerRef = useRef(null);
 
   // Load photos from localStorage on component mount
   useEffect(() => {
@@ -242,6 +246,20 @@ const Camera = () => {
       console.log('📸 Photos array updated, total count:', updated.length);
       return updated;
     });
+
+    // Set as last captured photo for preview
+    setLastCapturedPhoto(newPhoto);
+    
+    // Show flash effect
+    setShowFlash(true);
+    setTimeout(() => {
+      setShowFlash(false);
+    }, 200);
+    
+    // Auto-hide the preview after 5 seconds
+    setTimeout(() => {
+      setLastCapturedPhoto(null);
+    }, 5000);
   };
 
   // Delete photo
@@ -291,8 +309,85 @@ const Camera = () => {
     } catch (error) {
       console.error('🧪 Camera test failed:', error);
       setDebugInfo(`Camera test failed: ${error.message}`);
+         }
+   };
+
+  // Fullscreen functionality
+  const toggleFullscreen = async () => {
+    if (!containerRef.current) return;
+
+    try {
+      if (!isFullscreen) {
+        console.log('📱 Entering fullscreen...');
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+        } else if (containerRef.current.webkitRequestFullscreen) {
+          await containerRef.current.webkitRequestFullscreen();
+        } else if (containerRef.current.mozRequestFullScreen) {
+          await containerRef.current.mozRequestFullScreen();
+        } else if (containerRef.current.msRequestFullscreen) {
+          await containerRef.current.msRequestFullscreen();
+        }
+      } else {
+        console.log('📱 Exiting fullscreen...');
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+      }
+    } catch (error) {
+      console.error('📱 Fullscreen error:', error);
     }
   };
+
+  // Handle fullscreen change events and keyboard shortcuts
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      console.log('📱 Fullscreen state changed:', isCurrentlyFullscreen);
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    const handleKeyDown = (event) => {
+      if (isFullscreen && isStreaming) {
+        switch (event.code) {
+          case 'Space':
+            event.preventDefault();
+            console.log('⌨️ Space pressed - capturing photo');
+            capturePhoto();
+            break;
+          case 'Escape':
+            console.log('⌨️ Escape pressed - exiting fullscreen');
+            toggleFullscreen();
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen, isStreaming]);
 
   // Clean up stream on component unmount
   useEffect(() => {
@@ -356,7 +451,10 @@ const Camera = () => {
                   </div>
                 )}
 
-                <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
+                <div 
+                  ref={containerRef}
+                  className={`relative bg-black rounded-lg overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'aspect-video'}`}
+                >
                   {/* Always render video element, but control visibility */}
                   <video
                     ref={videoRef}
@@ -386,6 +484,13 @@ const Camera = () => {
                     <div className="absolute top-4 right-4 flex gap-2">
                       <button
                         className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                        onClick={toggleFullscreen}
+                        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                      >
+                        {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                      </button>
+                      <button
+                        className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={switchCamera}
                         title="Switch Camera"
                       >
@@ -411,6 +516,50 @@ const Camera = () => {
                         ?
                       </button>
                     </div>
+                  )}
+
+                  {/* Fullscreen capture button */}
+                  {isFullscreen && isStreaming && (
+                    <>
+                      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                        <button 
+                          className="btn btn-circle btn-lg bg-white/20 text-white border-white/30 hover:bg-white/30"
+                          onClick={capturePhoto}
+                        >
+                          <CameraIcon size={32} />
+                        </button>
+                      </div>
+                      
+                      {/* Fullscreen help text */}
+                      <div className="absolute bottom-4 left-4 text-white/70 text-sm">
+                        <div>Press <kbd className="kbd kbd-xs">Space</kbd> to capture</div>
+                        <div>Press <kbd className="kbd kbd-xs">Esc</kbd> to exit fullscreen</div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Last captured photo preview */}
+                  {lastCapturedPhoto && isStreaming && (
+                    <div className="absolute bottom-4 right-4 w-20 h-20 bg-white rounded-lg overflow-hidden shadow-lg border-2 border-white">
+                      <img 
+                        src={lastCapturedPhoto.data} 
+                        alt="Last captured" 
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        className="absolute -top-2 -right-2 btn btn-circle btn-xs bg-red-500 text-white border-none hover:bg-red-600"
+                        onClick={() => setLastCapturedPhoto(null)}
+                        title="Close preview"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Camera flash effect */}
+                  {showFlash && (
+                    <div className="absolute inset-0 bg-white opacity-70 pointer-events-none animate-ping" 
+                         style={{animationDuration: '200ms', animationIterationCount: 1}}></div>
                   )}
                 </div>
 

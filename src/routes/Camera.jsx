@@ -411,7 +411,11 @@ const Camera = () => {
 
                 <div 
                   ref={containerRef}
-                  className={`relative bg-black rounded-lg overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'aspect-video'}`}
+                  className={`relative bg-black rounded-lg overflow-hidden ${
+                    isFullscreen 
+                      ? 'fixed inset-0 z-50 rounded-none' 
+                      : 'aspect-[4/3] sm:aspect-video max-h-[70vh] sm:max-h-none'
+                  }`}
                 >
                   {/* Always render video element, but control visibility */}
                   <video
@@ -430,33 +434,33 @@ const Camera = () => {
                   {!isStreaming && (
                     <div className="absolute inset-0 w-full h-full flex items-center justify-center text-white">
                       <div className="text-center">
-                        <CameraIcon size={64} className="mx-auto mb-4 opacity-50" />
-                        <p className="text-lg">Camera not active</p>
-                        <p className="text-sm opacity-70">Click "Start Camera" to begin</p>
+                        <CameraIcon size={48} className="sm:w-16 sm:h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-base sm:text-lg">Camera not active</p>
+                        <p className="text-xs sm:text-sm opacity-70">Click "Start Camera" to begin</p>
                       </div>
                     </div>
                   )}
                   
                   {/* Camera controls overlay */}
                   {isStreaming && (
-                    <div className="absolute top-4 right-4 flex gap-2">
+                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-1 sm:gap-2">
                       <button
-                        className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                        className="btn btn-circle btn-xs sm:btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={toggleFullscreen}
                         title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                       >
-                        {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                        {isFullscreen ? <Minimize size={14} className="sm:w-4 sm:h-4" /> : <Maximize size={14} className="sm:w-4 sm:h-4" />}
                       </button>
                       <button
-                        className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                        className="btn btn-circle btn-xs sm:btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={switchCamera}
                         title="Switch Camera"
                       >
-                        <RotateCcw size={16} />
+                        <RotateCcw size={14} className="sm:w-4 sm:h-4" />
                       </button>
                       {/* Debug button */}
                       <button
-                        className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                        className="btn btn-circle btn-xs sm:btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={() => {
                           console.log('🔍 DEBUG INFO:');
                           console.log('🔍 Video element:', videoRef.current);
@@ -471,7 +475,7 @@ const Camera = () => {
                         }}
                         title="Debug Info"
                       >
-                        ?
+                        <span className="text-xs">?</span>
                       </button>
                     </div>
                   )}
@@ -498,18 +502,18 @@ const Camera = () => {
 
                   {/* Last captured photo preview */}
                   {lastCapturedPhoto && isStreaming && (
-                    <div className="absolute bottom-4 right-4 w-20 h-20 bg-white rounded-lg overflow-hidden shadow-lg border-2 border-white">
+                    <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-lg overflow-hidden shadow-lg border-2 border-white">
                       <img 
                         src={lastCapturedPhoto.data} 
                         alt="Last captured" 
                         className="w-full h-full object-cover"
                       />
                       <button
-                        className="absolute -top-2 -right-2 btn btn-circle btn-xs bg-red-500 text-white border-none hover:bg-red-600"
+                        className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 btn btn-circle btn-xs bg-red-500 text-white border-none hover:bg-red-600"
                         onClick={() => setLastCapturedPhoto(null)}
                         title="Close preview"
                       >
-                        <X size={12} />
+                        <X size={10} className="sm:w-3 sm:h-3" />
                       </button>
                     </div>
                   )}

@@ -381,7 +381,7 @@ const Homepage = () => {
             <a href="/help" className="link link-hover">Help</a>
             <a className="link link-hover">Privacy Policy</a>
             <a className="link link-hover">Terms of Service</a>
-            <a className="link link-hover">Contact</a>
+            <Link to="/contact" className="link link-hover">Contact</Link>
           </div>
         </nav>
       </footer>

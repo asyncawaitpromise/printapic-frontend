@@ -336,7 +336,7 @@ const Camera = () => {
     }
   };
 
-  // Handle fullscreen change events and keyboard shortcuts
+  // Handle fullscreen change events
   useEffect(() => {
     const handleFullscreenChange = () => {
       const isCurrentlyFullscreen = !!(
@@ -349,36 +349,18 @@ const Camera = () => {
       setIsFullscreen(isCurrentlyFullscreen);
     };
 
-    const handleKeyDown = (event) => {
-      if (isFullscreen && isStreaming) {
-        switch (event.code) {
-          case 'Space':
-            event.preventDefault();
-            console.log('⌨️ Space pressed - capturing photo');
-            capturePhoto();
-            break;
-          case 'Escape':
-            console.log('⌨️ Escape pressed - exiting fullscreen');
-            toggleFullscreen();
-            break;
-        }
-      }
-    };
-
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFullscreen, isStreaming]);
+  }, []);
 
   // Clean up stream on component unmount
   useEffect(() => {
@@ -441,26 +423,26 @@ const Camera = () => {
                     </div>
                   )}
                   
-                  {/* Camera controls overlay */}
-                  {isStreaming && (
-                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-1 sm:gap-2">
+                  {/* Camera controls overlay - moved to bottom */}
+                  {isStreaming && !isFullscreen && (
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3">
                       <button
-                        className="btn btn-circle btn-xs sm:btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                        className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={toggleFullscreen}
-                        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                        title="Enter Fullscreen"
                       >
-                        {isFullscreen ? <Minimize size={14} className="sm:w-4 sm:h-4" /> : <Maximize size={14} className="sm:w-4 sm:h-4" />}
+                        <Maximize size={20} />
                       </button>
                       <button
-                        className="btn btn-circle btn-xs sm:btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                        className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={switchCamera}
                         title="Switch Camera"
                       >
-                        <RotateCcw size={14} className="sm:w-4 sm:h-4" />
+                        <RotateCcw size={20} />
                       </button>
                       {/* Debug button */}
                       <button
-                        className="btn btn-circle btn-xs sm:btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                        className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={() => {
                           console.log('🔍 DEBUG INFO:');
                           console.log('🔍 Video element:', videoRef.current);
@@ -475,12 +457,12 @@ const Camera = () => {
                         }}
                         title="Debug Info"
                       >
-                        <span className="text-xs">?</span>
+                        <span className="text-sm">?</span>
                       </button>
                     </div>
                   )}
 
-                  {/* Fullscreen capture button */}
+                  {/* Fullscreen controls */}
                   {isFullscreen && isStreaming && (
                     <>
                       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
@@ -492,10 +474,15 @@ const Camera = () => {
                         </button>
                       </div>
                       
-                      {/* Fullscreen help text */}
-                      <div className="absolute bottom-4 left-4 text-white/70 text-sm">
-                        <div>Press <kbd className="kbd kbd-xs">Space</kbd> to capture</div>
-                        <div>Press <kbd className="kbd kbd-xs">Esc</kbd> to exit fullscreen</div>
+                      {/* Exit fullscreen button */}
+                      <div className="absolute top-4 right-4">
+                        <button
+                          className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                          onClick={toggleFullscreen}
+                          title="Exit Fullscreen"
+                        >
+                          <Minimize size={20} />
+                        </button>
                       </div>
                     </>
                   )}

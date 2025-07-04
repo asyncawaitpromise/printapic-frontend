@@ -17,10 +17,19 @@ const MobilePhotoCard = ({
   const longPressTimer = useRef(null);
   const pressStartTime = useRef(null);
 
+  // Track touch start position to detect scroll/dragging
+  const touchStartPos = useRef({ x: 0, y: 0 });
+  const movedRef = useRef(false);
+
   // Long press detection
   const handleTouchStart = (e) => {
     setIsPressed(true);
     pressStartTime.current = Date.now();
+    
+    // Record the initial touch position
+    const touch = e.touches ? e.touches[0] : e;
+    touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+    movedRef.current = false;
     
     // Start long press timer
     longPressTimer.current = setTimeout(() => {
@@ -32,11 +41,23 @@ const MobilePhotoCard = ({
         }
       }
     }, 500); // 500ms for long press
+  };
 
-    // Always prevent the default long-press behaviour (native context menu)
-    // and the subsequent synthetic mouse events that could duplicate our logic.
-    if (e && typeof e.preventDefault === 'function') {
-      e.preventDefault();
+  // Cancel long-press if user drags (scrolls) more than a small threshold
+  const handleTouchMove = (e) => {
+    if (!longPressTimer.current) return; // already cancelled or triggered
+
+    const touch = e.touches ? e.touches[0] : e;
+    const dx = Math.abs(touch.clientX - touchStartPos.current.x);
+    const dy = Math.abs(touch.clientY - touchStartPos.current.y);
+
+    const MOVE_THRESHOLD = 10; // pixels
+    if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
+      // User is likely scrolling – cancel long press
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+      movedRef.current = true;
+      setIsPressed(false);
     }
   };
 
@@ -47,6 +68,12 @@ const MobilePhotoCard = ({
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
+    }
+
+    // If the user moved (scrolling), do nothing further.
+    if (movedRef.current) {
+      movedRef.current = false;
+      return;
     }
 
     // If it was a quick tap and we're in selection mode, toggle selection
@@ -172,6 +199,7 @@ const MobilePhotoCard = ({
         `}
         onClick={handleClick}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onContextMenu={handleContextMenu}
       >

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Wand2, Eye, MoreVertical, Check } from 'react-feather';
+import { Camera, Upload, Zap, Eye, MoreVertical, Check } from 'react-feather';
 
 const MobilePhotoCard = ({ 
   photo, 
@@ -218,7 +218,7 @@ const MobilePhotoCard = ({
               onClick={(e) => handleQuickAction('sticker', e)}
               className="btn btn-ghost btn-sm w-full justify-start gap-2"
             >
-              <Wand2 size={14} />
+                                <Zap size={14} />
               Make Sticker
             </button>
           </div>

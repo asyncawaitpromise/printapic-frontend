@@ -132,7 +132,7 @@ export const useMobilePhotoSelection = (photos = [], maxSelection = 50) => {
       maxReached,
       percentage: totalCount > 0 ? Math.round((selectedCount / totalCount) * 100) : 0
     };
-  }, [selectedPhotos.size, photos.length, maxSelection]);
+  }, [selectedPhotos, photos, maxSelection]);
 
   // Haptic feedback for mobile devices
   const triggerHapticFeedback = useCallback((type = 'light') => {

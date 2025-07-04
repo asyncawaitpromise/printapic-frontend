@@ -32,9 +32,15 @@ const MobilePhotoCard = ({
         }
       }
     }, 500); // 500ms for long press
+
+    // Prevent the browser from generating an additional mouse/click event that can
+    // result in the selection state being toggled twice in quick succession.
+    if (isSelectionMode && e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e) => {
     setIsPressed(false);
     
     // Clear long press timer
@@ -51,12 +57,27 @@ const MobilePhotoCard = ({
       if (navigator.vibrate) {
         navigator.vibrate([10]);
       }
+
+      // Prevent the following click event (generated after touchend) from firing,
+      // which would otherwise toggle the selection a second time.
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+      }
     }
   };
 
+  // Handle regular click / tap (after the touch sequence has ended)
   const handleClick = () => {
-    // Only handle click for non-selection mode (to avoid double-triggering with touch)
-    if (!isSelectionMode) {
+    if (isSelectionMode) {
+      // In selection mode, a regular click should toggle selection
+      onToggleSelection?.(photo.id);
+
+      // Optional haptic feedback for quick feedback
+      if (navigator.vibrate) {
+        navigator.vibrate([10]);
+      }
+    } else {
+      // Normal behaviour: open photo preview
       onView?.(photo);
     }
   };
@@ -147,9 +168,6 @@ const MobilePhotoCard = ({
         onClick={handleClick}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        onMouseDown={handleTouchStart}
-        onMouseUp={handleTouchEnd}
-        onMouseLeave={handleTouchEnd}
       >
         {/* Photo Image */}
         <img

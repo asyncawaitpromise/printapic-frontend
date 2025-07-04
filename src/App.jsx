@@ -7,6 +7,7 @@ import SignIn from "./routes/SignIn.jsx";
 import SignUp from "./routes/SignUp.jsx";
 import Settings from "./routes/Settings.jsx";
 import Pricing from "./routes/Pricing.jsx";
+import Contact from "./routes/Contact.jsx";
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Reference />} />
         <Route path="*" element={<>Error!!!</>} />
       </Routes>

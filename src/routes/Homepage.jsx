@@ -24,6 +24,7 @@ const Homepage = () => {
                 <li><a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How It Works</a></li>
                 <li><a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a></li>
                 <li><a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a></li>
+                <li><Link to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link></li>
                 <li><Link to="/camera" onClick={() => setMobileMenuOpen(false)}>Get Started</Link></li>
               </ul>
             )}
@@ -35,6 +36,7 @@ const Homepage = () => {
             <li><a href="#how-it-works" className="text-base-content/70 hover:text-base-content">How It Works</a></li>
             <li><a href="#features" className="text-base-content/70 hover:text-base-content">Features</a></li>
             <li><a href="#pricing" className="text-base-content/70 hover:text-base-content">Pricing</a></li>
+            <li><Link to="/contact" className="text-base-content/70 hover:text-base-content">Contact</Link></li>
           </ul>
         </div>
         <div className="navbar-end">

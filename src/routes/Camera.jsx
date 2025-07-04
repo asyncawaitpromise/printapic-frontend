@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera as CameraIcon, Image, ArrowLeft, RotateCcw, Maximize, Minimize, X } from 'react-feather';
+import { Camera as CameraIcon, Image, ArrowLeft, RotateCcw, Maximize, Minimize, X, Upload } from 'react-feather';
 import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
+import MobileFileUpload from '../components/MobileFileUpload';
 
 const Camera = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Camera = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastCapturedPhoto, setLastCapturedPhoto] = useState(null);
   const [showFlash, setShowFlash] = useState(false);
+  const [activeMode, setActiveMode] = useState('camera'); // 'camera' or 'upload'
   const containerRef = useRef(null);
 
   // Load photos from localStorage on component mount
@@ -262,6 +264,18 @@ const Camera = () => {
     }, 5000);
   };
 
+  // Handle uploaded files
+  const handleFilesUploaded = (uploadedFiles) => {
+    console.log('📤 Files uploaded:', uploadedFiles.length, 'files');
+    
+    // Add uploaded files to photos array
+    setPhotos(prev => {
+      const updated = [...uploadedFiles, ...prev];
+      console.log('📸 Photos array updated with uploads, total count:', updated.length);
+      return updated;
+    });
+  };
+
 
 
   // Test camera availability
@@ -375,9 +389,29 @@ const Camera = () => {
       {/* Camera Interface */}
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
+            {/* Mode Toggle */}
+            <div className="tabs tabs-boxed mb-6 bg-base-200">
+              <button 
+                className={`tab tab-lg flex-1 gap-2 ${activeMode === 'camera' ? 'tab-active' : ''}`}
+                onClick={() => setActiveMode('camera')}
+              >
+                <CameraIcon size={20} />
+                Take Photo
+              </button>
+              <button 
+                className={`tab tab-lg flex-1 gap-2 ${activeMode === 'upload' ? 'tab-active' : ''}`}
+                onClick={() => setActiveMode('upload')}
+              >
+                <Upload size={20} />
+                Upload Photos
+              </button>
+            </div>
+
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <h2 className="card-title text-2xl mb-4">Take a Photo</h2>
+                <h2 className="card-title text-2xl mb-4">
+                  {activeMode === 'camera' ? 'Take a Photo' : 'Upload Photos'}
+                </h2>
                 
                 {error && (
                   <div className="alert alert-error mb-4">
@@ -390,6 +424,10 @@ const Camera = () => {
                     <span>{debugInfo}</span>
                   </div>
                 )}
+
+                {/* Camera Mode */}
+                {activeMode === 'camera' && (
+                  <>
 
                 <div 
                   ref={containerRef}
@@ -560,6 +598,16 @@ const Camera = () => {
                       </Link>
                     </p>
                   </div>
+                )}
+                </>
+                )}
+
+                {/* Upload Mode */}
+                {activeMode === 'upload' && (
+                  <MobileFileUpload 
+                    onFilesUploaded={handleFilesUploaded}
+                    maxFiles={10}
+                  />
                 )}
               </div>
             </div>

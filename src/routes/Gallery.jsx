@@ -1,12 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Image, Trash2, Check, ArrowLeft, Camera as CameraIcon, X, Maximize2 } from 'react-feather';
+import { Image, Trash2, Check, ArrowLeft, Camera as CameraIcon, X, Maximize2, CheckSquare, Square } from 'react-feather';
 import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
+import { useMobilePhotoSelection } from '../hooks/useMobilePhotoSelection';
+import MobileBulkActions from '../components/MobileBulkActions';
+import MobilePhotoCard from '../components/MobilePhotoCard';
+import MobileStickerCustomizer from '../components/MobileStickerCustomizer';
 
 const Gallery = () => {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState([]);
   const [expandedPhoto, setExpandedPhoto] = useState(null);
+  const [stickerCustomizerOpen, setStickerCustomizerOpen] = useState(false);
+  const [selectedPhotoForSticker, setSelectedPhotoForSticker] = useState(null);
+  
+  // Multi-select functionality
+  const {
+    selectedPhotos,
+    isSelectionMode,
+    toggleSelectionMode,
+    togglePhotoSelection,
+    handleLongPress,
+    clearSelection,
+    getSelectedPhotos,
+    getSelectionStats,
+    isPhotoSelected,
+    triggerHapticFeedback
+  } = useMobilePhotoSelection(photos, 50);
 
   // Load photos from localStorage on component mount
   useEffect(() => {
@@ -67,6 +87,93 @@ const Gallery = () => {
     setExpandedPhoto(null);
   };
 
+  // Bulk action handlers
+  const handleDeleteSelected = async (selectedPhotos) => {
+    const photoIds = selectedPhotos.map(p => p.id);
+    console.log('🗑️ Bulk deleting photos:', photoIds);
+    
+    setPhotos(prev => prev.filter(photo => !photoIds.includes(photo.id)));
+    clearSelection();
+    triggerHapticFeedback('success');
+  };
+
+  const handleShareSelected = async (selectedPhotos) => {
+    console.log('📤 Sharing photos:', selectedPhotos.length);
+    
+    if (navigator.share) {
+      try {
+        // Create files from base64 data
+        const files = selectedPhotos.map((photo, index) => {
+          const byteCharacters = atob(photo.data.split(',')[1]);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          return new File([byteArray], `photo_${index + 1}.jpg`, { type: 'image/jpeg' });
+        });
+
+        await navigator.share({
+          title: `${selectedPhotos.length} Photos from Print A Pic`,
+          files: files
+        });
+        
+        triggerHapticFeedback('success');
+      } catch (error) {
+        console.error('Error sharing photos:', error);
+        triggerHapticFeedback('error');
+      }
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      alert('Sharing is not supported on this device');
+    }
+  };
+
+  const handleDownloadSelected = async (selectedPhotos) => {
+    console.log('💾 Downloading photos:', selectedPhotos.length);
+    
+    selectedPhotos.forEach((photo, index) => {
+      const link = document.createElement('a');
+      link.href = photo.data;
+      link.download = `photo_${index + 1}_${new Date(photo.timestamp).toISOString().split('T')[0]}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+    
+    triggerHapticFeedback('success');
+  };
+
+  const handleConvertToStickers = async (selectedPhotos) => {
+    console.log('🎯 Converting photos to stickers:', selectedPhotos.length);
+    
+    // Placeholder for sticker conversion
+    alert(`Converting ${selectedPhotos.length} photos to stickers - This feature will be implemented later!`);
+    triggerHapticFeedback('success');
+  };
+
+  const handlePhotoView = (photo) => {
+    if (!isSelectionMode) {
+      expandPhoto(photo);
+    }
+  };
+
+  const handlePhotoMakeSticker = (photo) => {
+    setSelectedPhotoForSticker(photo);
+    setStickerCustomizerOpen(true);
+  };
+
+  const handleStickerCustomizerClose = () => {
+    setStickerCustomizerOpen(false);
+    setSelectedPhotoForSticker(null);
+  };
+
+  const handleStickerCustomizerComplete = (processedPhoto) => {
+    // Add the processed photo to the gallery
+    setPhotos(prev => [processedPhoto, ...prev]);
+    console.log('🎨 Processed photo added to gallery:', processedPhoto.id);
+  };
+
   return (
     <div className="min-h-screen bg-base-100 pb-20">
 
@@ -74,11 +181,24 @@ const Gallery = () => {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <div className="max-w-6xl mx-auto">
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-2">Your Photos</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold">Your Photos</h2>
+              {photos.length > 0 && (
+                <button
+                  onClick={toggleSelectionMode}
+                  className={`btn btn-sm gap-2 ${isSelectionMode ? 'btn-primary' : 'btn-outline'}`}
+                >
+                  {isSelectionMode ? <CheckSquare size={16} /> : <Square size={16} />}
+                  {isSelectionMode ? 'Exit Select' : 'Select'}
+                </button>
+              )}
+            </div>
             <p className="text-sm sm:text-base text-base-content/70">
               {photos.length === 0 
                 ? 'No photos captured yet. Take your first photo to get started!'
-                : `${photos.length} photo${photos.length !== 1 ? 's' : ''} ready for customization.`
+                : isSelectionMode 
+                  ? `Select photos for bulk actions. ${getSelectionStats().selectedCount} selected.`
+                  : `${photos.length} photo${photos.length !== 1 ? 's' : ''} ready for customization.`
               }
             </p>
           </div>
@@ -125,64 +245,19 @@ const Gallery = () => {
               </div>
 
               {/* Photo grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {photos.map((photo, index) => (
-                  <div key={photo.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-                    <figure className="aspect-[4/3] sm:aspect-video relative">
-                      <img 
-                        src={photo.data} 
-                        alt={`Captured ${new Date(photo.timestamp).toLocaleDateString()}`}
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => expandPhoto(photo)}
-                      />
-                      {/* Expand button */}
-                      <button
-                        className="absolute top-2 right-2 btn btn-circle btn-xs bg-black/50 text-white border-white/30 hover:bg-black/70"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          expandPhoto(photo);
-                        }}
-                        title="Expand Photo"
-                      >
-                        <Maximize2 size={12} />
-                      </button>
-                      {/* Photo number badge */}
-                      <div className="absolute top-2 left-2 badge badge-primary badge-xs sm:badge-sm">
-                        #{photos.length - index}
-                      </div>
-                      {/* Photo dimensions badge */}
-                      <div className="absolute bottom-2 right-2 badge badge-neutral badge-xs text-xs">
-                        {photo.width}×{photo.height}
-                      </div>
-                    </figure>
-                    <div className="card-body p-3 sm:p-4">
-                      <div className="text-xs sm:text-sm text-base-content/70 mb-2 sm:mb-3">
-                        <div className="font-medium">
-                          {new Date(photo.timestamp).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs">
-                          {new Date(photo.timestamp).toLocaleTimeString()}
-                        </div>
-                      </div>
-                      <div className="card-actions justify-between">
-                        <button 
-                          className="btn btn-error btn-xs sm:btn-sm gap-1"
-                          onClick={() => deletePhoto(photo.id)}
-                        >
-                          <Trash2 size={12} className="sm:w-4 sm:h-4" />
-                          <span className="hidden sm:inline">Delete</span>
-                        </button>
-                        <button 
-                          className="btn btn-primary btn-xs sm:btn-sm gap-1"
-                          onClick={() => convertToSticker(photo.id)}
-                        >
-                          <Check size={12} className="sm:w-4 sm:h-4" />
-                          <span className="hidden sm:inline">Make Sticker</span>
-                          <span className="sm:hidden">Sticker</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <MobilePhotoCard
+                    key={photo.id}
+                    photo={photo}
+                    index={index}
+                    isSelected={isPhotoSelected(photo.id)}
+                    isSelectionMode={isSelectionMode}
+                    onToggleSelection={togglePhotoSelection}
+                    onLongPress={handleLongPress}
+                    onView={handlePhotoView}
+                    onMakeSticker={handlePhotoMakeSticker}
+                  />
                 ))}
               </div>
 
@@ -281,6 +356,26 @@ const Gallery = () => {
         </div>
       )}
       
+      {/* Mobile Bulk Actions */}
+      {isSelectionMode && (
+        <MobileBulkActions
+          selectedPhotos={getSelectedPhotos()}
+          onDeleteSelected={handleDeleteSelected}
+          onShareSelected={handleShareSelected}
+          onDownloadSelected={handleDownloadSelected}
+          onConvertToStickers={handleConvertToStickers}
+          onClearSelection={clearSelection}
+        />
+      )}
+
+      {/* Mobile Sticker Customizer */}
+      <MobileStickerCustomizer
+        photo={selectedPhotoForSticker}
+        isOpen={stickerCustomizerOpen}
+        onClose={handleStickerCustomizerClose}
+        onComplete={handleStickerCustomizerComplete}
+      />
+
       {/* Bottom Navigation */}
       <BottomNavbar />
     </div>

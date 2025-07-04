@@ -1,6 +1,7 @@
 import React from 'react';
-import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign, Home, Info, CreditCard } from 'react-feather';
+import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign } from 'react-feather';
 import { Link } from 'react-router-dom';
+import BottomNavbar from '../components/BottomNavbar';
 
 const Homepage = () => {
   return (
@@ -333,26 +334,7 @@ const Homepage = () => {
       </footer>
 
       {/* Bottom Navigation */}
-      <div className="btm-nav bg-base-100 border-t border-base-300 shadow-lg">
-        <button className="active text-primary">
-          <Home size={22} />
-        </button>
-        <button 
-          onClick={() => document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' })}
-          className="text-base-content/70 hover:text-primary"
-        >
-          <Info size={22} />
-        </button>
-        <Link to="/camera" className="text-base-content/70 hover:text-primary">
-          <Camera size={22} />
-        </Link>
-        <button 
-          onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
-          className="text-base-content/70 hover:text-primary"
-        >
-          <CreditCard size={22} />
-        </button>
-      </div>
+      <BottomNavbar />
     </div>
   );
 };

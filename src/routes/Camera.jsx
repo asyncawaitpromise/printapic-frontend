@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera as CameraIcon, Image, ArrowLeft, RotateCcw, Maximize, Minimize, X } from 'react-feather';
 import { useNavigate, Link } from 'react-router-dom';
+import BottomNavbar from '../components/BottomNavbar';
 
 const Camera = () => {
   const navigate = useNavigate();
@@ -387,28 +388,7 @@ const Camera = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-base-100">
-      {/* Navigation */}
-      <div className="navbar bg-base-100 shadow-sm">
-        <div className="navbar-start">
-          <button 
-            className="btn btn-ghost gap-2"
-            onClick={() => navigate('/')}
-          >
-            <ArrowLeft size={20} />
-            Back to Home
-          </button>
-        </div>
-        <div className="navbar-center">
-          <span className="text-xl font-bold">Photo Studio</span>
-        </div>
-        <div className="navbar-end">
-          <Link to="/gallery" className="btn btn-outline gap-2">
-            <Image size={16} />
-            Gallery ({photos.length})
-          </Link>
-        </div>
-      </div>
+    <div className="min-h-screen bg-base-100 pb-20">
 
       {/* Camera Interface */}
         <div className="container mx-auto px-4 py-8">
@@ -594,6 +574,9 @@ const Camera = () => {
             </div>
           </div>
         </div>
+        
+        {/* Bottom Navigation */}
+        <BottomNavbar />
     </div>
   );
 };

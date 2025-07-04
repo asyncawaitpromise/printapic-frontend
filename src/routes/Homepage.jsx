@@ -39,20 +39,20 @@ const Homepage = () => {
         </div>
         <div className="navbar-end">
           <div className="hidden lg:flex gap-2">
-            <button className="btn btn-ghost gap-2">
+            <Link to="/signin" className="btn btn-ghost gap-2">
               <User size={18} />
               Sign In
-            </button>
+            </Link>
             <Link to="/camera" className="btn btn-primary gap-2">
               <Camera size={18} />
               Get Started
             </Link>
           </div>
           <div className="lg:hidden">
-            <button className="btn btn-ghost btn-sm gap-1">
+            <Link to="/signin" className="btn btn-ghost btn-sm gap-1">
               <User size={16} />
               Sign In
-            </button>
+            </Link>
           </div>
         </div>
       </div>

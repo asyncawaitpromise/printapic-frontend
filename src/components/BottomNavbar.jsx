@@ -28,26 +28,12 @@ const BottomNavbar = () => {
 
   return (
     <div className="btm-nav bg-base-100 border-t border-base-300 shadow-lg">
-      <button 
-        onClick={handleLogout}
-        className="text-base-content/70 hover:text-error"
-        title="Sign Out"
-      >
-        <LogOut size={22} />
-      </button>
-      <button 
-        onClick={() => navigate('/settings')}
-        className={isActive('/settings') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
-        title="Settings"
-      >
-        <Settings size={22} />
-      </button>
       <Link 
-        to="/camera" 
-        className={isActive('/camera') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
-        title="Camera"
+        to="/pricing" 
+        className={isActive('/pricing') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
+        title="Pricing"
       >
-        <Camera size={22} />
+        <CreditCard size={22} />
       </Link>
       <Link 
         to="/gallery" 
@@ -57,12 +43,26 @@ const BottomNavbar = () => {
         <Image size={22} />
       </Link>
       <Link 
-        to="/pricing" 
-        className={isActive('/pricing') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
-        title="Pricing"
+        to="/camera" 
+        className={isActive('/camera') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
+        title="Camera"
       >
-        <CreditCard size={22} />
+        <Camera size={22} />
       </Link>
+      <button 
+        onClick={() => navigate('/settings')}
+        className={isActive('/settings') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
+        title="Settings"
+      >
+        <Settings size={22} />
+      </button>
+      <button 
+        onClick={handleLogout}
+        className="text-base-content/70 hover:text-error"
+        title="Sign Out"
+      >
+        <LogOut size={22} />
+      </button>
     </div>
   );
 };

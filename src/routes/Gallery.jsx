@@ -132,10 +132,20 @@ const Gallery = () => {
   const handleDownloadSelected = async (selectedPhotos) => {
     console.log('💾 Downloading photos:', selectedPhotos.length);
     
-    selectedPhotos.forEach((photo, index) => {
+    selectedPhotos.forEach((photo, idx) => {
       const link = document.createElement('a');
       link.href = photo.data;
-      link.download = `photo_${index + 1}_${new Date(photo.timestamp).toISOString().split('T')[0]}.jpg`;
+
+      // Generate a unique, readable filename using the photo timestamp + an index suffix
+      // Example: photo_2024-07-04T12-34-56.789Z_aa1.jpg  (invalid characters like ':' removed)
+      const isoString = new Date(photo.timestamp).toISOString();
+      const sanitizedTimestamp = isoString.replace(/[:]/g, '-');
+
+      // If the photo has an id, use part of it to guarantee uniqueness; otherwise fall back to the loop index.
+      const uniqueSuffix = photo.id ? photo.id.toString().slice(-4) : idx + 1;
+
+      link.download = `photo_${sanitizedTimestamp}_${uniqueSuffix}.jpg`;
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -1,13 +1,64 @@
 import React from 'react';
-import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign } from 'react-feather';
+import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign, User, Menu, X } from 'react-feather';
 import { Link } from 'react-router-dom';
-import BottomNavbar from '../components/BottomNavbar';
 
 const Homepage = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
+    <div className="min-h-screen bg-base-100">
+      {/* Navigation */}
+      <div className="navbar bg-base-100/95 backdrop-blur-sm shadow-sm fixed top-0 z-50">
+        <div className="navbar-start">
+          <div className="dropdown">
+            <div 
+              tabIndex={0} 
+              role="button" 
+              className="btn btn-ghost lg:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </div>
+            {mobileMenuOpen && (
+              <ul className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                <li><a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How It Works</a></li>
+                <li><a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a></li>
+                <li><a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a></li>
+                <li><Link to="/camera" onClick={() => setMobileMenuOpen(false)}>Get Started</Link></li>
+              </ul>
+            )}
+          </div>
+          <a className="btn btn-ghost text-xl font-bold">Print A Pic</a>
+        </div>
+        <div className="navbar-center hidden lg:flex">
+          <ul className="menu menu-horizontal px-1">
+            <li><a href="#how-it-works" className="text-base-content/70 hover:text-base-content">How It Works</a></li>
+            <li><a href="#features" className="text-base-content/70 hover:text-base-content">Features</a></li>
+            <li><a href="#pricing" className="text-base-content/70 hover:text-base-content">Pricing</a></li>
+          </ul>
+        </div>
+        <div className="navbar-end">
+          <div className="hidden lg:flex gap-2">
+            <button className="btn btn-ghost gap-2">
+              <User size={18} />
+              Sign In
+            </button>
+            <Link to="/camera" className="btn btn-primary gap-2">
+              <Camera size={18} />
+              Get Started
+            </Link>
+          </div>
+          <div className="lg:hidden">
+            <button className="btn btn-ghost btn-sm gap-1">
+              <User size={16} />
+              Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Hero Section */}
-      <div className="hero min-h-[70vh] bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10">
+      <div className="hero min-h-[70vh] bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10 pt-16">
         <div className="hero-content text-center max-w-6xl">
           <div>
             <h1 className="text-6xl font-bold leading-tight mb-6">
@@ -332,9 +383,6 @@ const Homepage = () => {
           </div>
         </nav>
       </footer>
-
-      {/* Bottom Navigation */}
-      <BottomNavbar />
     </div>
   );
 };

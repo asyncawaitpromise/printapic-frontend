@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Wand2, ArrowLeft, Clock, Zap, Download, Eye, AlertCircle } from 'react-feather';
+import { X, Zap, ArrowLeft, Clock, Download, Eye, AlertCircle } from 'react-feather';
 import { usePhotoProcessing } from '../hooks/usePhotoProcessing';
 
 const MobileStickerCustomizer = ({ 
@@ -187,7 +187,7 @@ const MobileStickerCustomizer = ({
                             </span>
                           </div>
                         </div>
-                        <Wand2 size={20} />
+                        <Zap size={20} />
                       </div>
                     </button>
                   ))}
@@ -251,7 +251,7 @@ const MobileStickerCustomizer = ({
                   onClick={() => setCurrentStep('select')}
                   className="btn btn-outline gap-2"
                 >
-                  <Wand2 size={18} />
+                  <Zap size={18} />
                   Try Another Style
                 </button>
               </div>

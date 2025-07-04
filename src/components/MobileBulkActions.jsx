@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Share, Download, Wand2, X, Check, AlertTriangle } from 'react-feather';
+import { Trash2, Share, Download, Zap, X, Check, AlertTriangle } from 'react-feather';
 
 const MobileBulkActions = ({ 
   selectedPhotos = [], 
@@ -129,7 +129,7 @@ const MobileBulkActions = ({
             disabled={isProcessing}
             className="btn btn-primary btn-lg gap-2 h-14"
           >
-            <Wand2 size={20} />
+                          <Zap size={20} />
             <div className="text-left">
               <div className="font-semibold">Make Stickers</div>
               <div className="text-xs opacity-70">AI Processing</div>

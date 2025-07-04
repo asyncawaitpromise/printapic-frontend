@@ -33,9 +33,9 @@ const MobilePhotoCard = ({
       }
     }, 500); // 500ms for long press
 
-    // Prevent the browser from generating an additional mouse/click event that can
-    // result in the selection state being toggled twice in quick succession.
-    if (isSelectionMode && e && typeof e.preventDefault === 'function') {
+    // Always prevent the default long-press behaviour (native context menu)
+    // and the subsequent synthetic mouse events that could duplicate our logic.
+    if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
   };
@@ -156,6 +156,11 @@ const MobilePhotoCard = ({
     return null;
   };
 
+  // Explicitly suppress the browser context menu (e.g., on long-press)
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+  };
+
   return (
     <div className={`relative ${className}`}>
       <div
@@ -168,6 +173,7 @@ const MobilePhotoCard = ({
         onClick={handleClick}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onContextMenu={handleContextMenu}
       >
         {/* Photo Image */}
         <img

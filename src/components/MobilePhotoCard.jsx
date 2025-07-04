@@ -55,13 +55,8 @@ const MobilePhotoCard = ({
   };
 
   const handleClick = () => {
-    if (isSelectionMode) {
-      onToggleSelection?.(photo.id);
-      // Haptic feedback for selection
-      if (navigator.vibrate) {
-        navigator.vibrate([10]);
-      }
-    } else {
+    // Only handle click for non-selection mode (to avoid double-triggering with touch)
+    if (!isSelectionMode) {
       onView?.(photo);
     }
   };

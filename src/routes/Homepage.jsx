@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign, User, Menu, X } from 'react-feather';
+import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign, User, Menu, X, Info, Mail } from 'react-feather';
 import { Link } from 'react-router-dom';
 
 const Homepage = () => {
@@ -21,11 +21,31 @@ const Homepage = () => {
             </div>
             {mobileMenuOpen && (
               <ul className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                <li><a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How It Works</a></li>
-                <li><a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a></li>
-                <li><a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a></li>
-                <li><Link to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link></li>
-                <li><Link to="/camera" onClick={() => setMobileMenuOpen(false)}>Get Started</Link></li>
+                <li>
+                  <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                    <Info size={16} /> How It Works
+                  </a>
+                </li>
+                <li>
+                  <a href="#features" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                    <Zap size={16} /> Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                    <DollarSign size={16} /> Pricing
+                  </a>
+                </li>
+                <li>
+                  <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                    <Mail size={16} /> Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/camera" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                    <Camera size={16} /> Get Started
+                  </Link>
+                </li>
               </ul>
             )}
           </div>

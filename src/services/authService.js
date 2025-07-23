@@ -1,5 +1,5 @@
 import PocketBase from 'pocketbase';
-import config from '../config/env.js';
+import config from '../config/config.local.js';
 
 class AuthService {
   constructor() {

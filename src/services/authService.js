@@ -1,8 +1,9 @@
 import PocketBase from 'pocketbase';
+import config from '../config/env.js';
 
 class AuthService {
   constructor() {
-    this.pb = new PocketBase(import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090');
+    this.pb = new PocketBase(config.PB_URL);
     this.pb.autoCancellation(false);
   }
 

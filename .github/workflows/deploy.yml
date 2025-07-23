@@ -45,3 +45,9 @@ jobs:
           server: '${{ secrets.CAPROVER_SERVER }}'
           app: '${{ secrets.APP_NAME }}'
           token: '${{ secrets.APP_TOKEN }}'
+
+      - name: 'Create env file'
+        run: |
+          touch .env.local
+          echo VITE_PB_URL="${{ secrets.VITE_PB_URL }}" >> .env.local
+          cat .env.local

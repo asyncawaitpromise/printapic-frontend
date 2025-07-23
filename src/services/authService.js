@@ -31,10 +31,10 @@ class AuthService {
         ...userData
       };
       
-      const record = await this.pb.collection('users').create(data);
+      const record = await this.pb.collection('printapic_users').create(data);
       
       // Send verification email if needed
-      await this.pb.collection('users').requestVerification(email);
+      await this.pb.collection('printapic_users').requestVerification(email);
       
       return { success: true, user: record };
     } catch (error) {
@@ -45,7 +45,7 @@ class AuthService {
   // Sign in with email and password
   async signIn(email, password) {
     try {
-      const authData = await this.pb.collection('users').authWithPassword(email, password);
+      const authData = await this.pb.collection('printapic_users').authWithPassword(email, password);
       return { success: true, user: authData.record };
     } catch (error) {
       return { success: false, error: error.message };
@@ -61,7 +61,7 @@ class AuthService {
   async refresh() {
     try {
       if (this.pb.authStore.isValid) {
-        await this.pb.collection('users').authRefresh();
+        await this.pb.collection('printapic_users').authRefresh();
         return true;
       }
       return false;
@@ -74,7 +74,7 @@ class AuthService {
   // Request password reset
   async requestPasswordReset(email) {
     try {
-      await this.pb.collection('users').requestPasswordReset(email);
+      await this.pb.collection('printapic_users').requestPasswordReset(email);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -84,7 +84,7 @@ class AuthService {
   // Confirm password reset
   async confirmPasswordReset(token, password, passwordConfirm) {
     try {
-      await this.pb.collection('users').confirmPasswordReset(token, password, passwordConfirm);
+      await this.pb.collection('printapic_users').confirmPasswordReset(token, password, passwordConfirm);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -94,7 +94,7 @@ class AuthService {
   // Update user profile
   async updateProfile(data) {
     try {
-      const record = await this.pb.collection('users').update(this.currentUser.id, data);
+      const record = await this.pb.collection('printapic_users').update(this.currentUser.id, data);
       return { success: true, user: record };
     } catch (error) {
       return { success: false, error: error.message };
@@ -111,7 +111,7 @@ class AuthService {
   // OAuth with Google
   async signInWithGoogle() {
     try {
-      const authData = await this.pb.collection('users').authWithOAuth2({ provider: 'google' });
+      const authData = await this.pb.collection('printapic_users').authWithOAuth2({ provider: 'google' });
       return { success: true, user: authData.record };
     } catch (error) {
       return { success: false, error: error.message };
@@ -121,7 +121,7 @@ class AuthService {
   // OAuth with GitHub
   async signInWithGitHub() {
     try {
-      const authData = await this.pb.collection('users').authWithOAuth2({ provider: 'github' });
+      const authData = await this.pb.collection('printapic_users').authWithOAuth2({ provider: 'github' });
       return { success: true, user: authData.record };
     } catch (error) {
       return { success: false, error: error.message };
@@ -131,7 +131,7 @@ class AuthService {
   // OAuth with Discord
   async signInWithDiscord() {
     try {
-      const authData = await this.pb.collection('users').authWithOAuth2({ provider: 'discord' });
+      const authData = await this.pb.collection('printapic_users').authWithOAuth2({ provider: 'discord' });
       return { success: true, user: authData.record };
     } catch (error) {
       return { success: false, error: error.message };
@@ -141,7 +141,7 @@ class AuthService {
   // Generic OAuth method
   async signInWithOAuth(provider) {
     try {
-      const authData = await this.pb.collection('users').authWithOAuth2({ provider });
+      const authData = await this.pb.collection('printapic_users').authWithOAuth2({ provider });
       return { success: true, user: authData.record };
     } catch (error) {
       return { success: false, error: error.message };

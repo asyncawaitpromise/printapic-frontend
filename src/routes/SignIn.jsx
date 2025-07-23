@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, AlertCircle } from 'react-feather';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import BottomNavbar from '../components/BottomNavbar';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn, signInWithGoogle, requestPasswordReset, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
@@ -58,60 +60,37 @@ const SignIn = () => {
     
     if (!validateForm()) return;
     
-    setLoading(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = await signIn(formData.email, formData.password);
       
-      // For now, just simulate success
-      console.log('Sign in attempt:', formData);
-      
-      // Simulate successful sign in
-      localStorage.setItem('user', JSON.stringify({
-        email: formData.email,
-        name: formData.email.split('@')[0],
-        signedInAt: new Date().toISOString()
-      }));
-      
-      // Redirect to camera page
-      navigate('/camera');
-      
+      if (result.success) {
+        // Redirect to intended location or camera page
+        const from = location.state?.from?.pathname || '/camera';
+        navigate(from, { replace: true });
+      } else {
+        setErrors({ general: result.error });
+      }
     } catch (error) {
       console.error('Sign in error:', error);
-      setErrors({ general: 'Invalid email or password. Please try again.' });
-    } finally {
-      setLoading(false);
+      setErrors({ general: 'An unexpected error occurred. Please try again.' });
     }
   };
 
   // Handle Google OAuth sign in
   const handleGoogleSignIn = async () => {
-    setLoading(true);
-    
     try {
-      // Simulate Google OAuth flow
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await signInWithGoogle();
       
-      // For now, just simulate success
-      console.log('Google sign in attempt');
-      
-      // Simulate successful Google sign in
-      localStorage.setItem('user', JSON.stringify({
-        email: 'user@gmail.com',
-        name: 'Google User',
-        provider: 'google',
-        signedInAt: new Date().toISOString()
-      }));
-      
-      // Redirect to camera page
-      navigate('/camera');
-      
+      if (result.success) {
+        // Redirect to intended location or camera page
+        const from = location.state?.from?.pathname || '/camera';
+        navigate(from, { replace: true });
+      } else {
+        setErrors({ general: result.error });
+      }
     } catch (error) {
       console.error('Google sign in error:', error);
       setErrors({ general: 'Google sign in failed. Please try again.' });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -129,21 +108,18 @@ const SignIn = () => {
       return;
     }
     
-    setLoading(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = await requestPasswordReset(forgotPasswordEmail);
       
-      console.log('Password reset request for:', forgotPasswordEmail);
-      setForgotPasswordSent(true);
-      setErrors({});
-      
+      if (result.success) {
+        setForgotPasswordSent(true);
+        setErrors({});
+      } else {
+        setErrors({ forgotPassword: result.error });
+      }
     } catch (error) {
       console.error('Forgot password error:', error);
       setErrors({ forgotPassword: 'Failed to send reset email. Please try again.' });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -174,7 +150,7 @@ const SignIn = () => {
               {/* Google Sign In Button */}
               <button 
                 onClick={handleGoogleSignIn}
-                disabled={loading}
+                disabled={isLoading}
                 className="btn btn-outline btn-block gap-2 mb-4"
               >
                 <svg width="18" height="18" viewBox="0 0 18 18">
@@ -183,7 +159,7 @@ const SignIn = () => {
                   <path fill="#FBBC05" d="M4.5 10.49a4.8 4.8 0 0 1 0-3.07V5.35H1.83a8 8 0 0 0 0 7.28l2.67-2.14z"/>
                   <path fill="#EA4335" d="M8.98 4.72c1.16 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.35L4.5 7.42a4.77 4.77 0 0 1 4.48-2.7z"/>
                 </svg>
-                {loading ? 'Signing in...' : 'Continue with Google'}
+                {isLoading ? 'Signing in...' : 'Continue with Google'}
               </button>
 
               {/* Divider */}
@@ -213,7 +189,7 @@ const SignIn = () => {
                         onChange={handleInputChange}
                         placeholder="Enter your email"
                         className={`input input-bordered w-full pl-10 ${errors.email ? 'input-error' : ''}`}
-                        disabled={loading}
+                        disabled={isLoading}
                       />
                       <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40" />
                     </div>
@@ -237,7 +213,7 @@ const SignIn = () => {
                         onChange={handleInputChange}
                         placeholder="Enter your password"
                         className={`input input-bordered w-full pl-10 pr-10 ${errors.password ? 'input-error' : ''}`}
-                        disabled={loading}
+                        disabled={isLoading}
                       />
                       <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40" />
                       <button
@@ -269,10 +245,10 @@ const SignIn = () => {
                   {/* Sign In Button */}
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={isLoading}
                     className="btn btn-primary btn-block"
                   >
-                    {loading ? (
+                    {isLoading ? (
                       <>
                         <span className="loading loading-spinner loading-sm"></span>
                         Signing in...
@@ -310,7 +286,7 @@ const SignIn = () => {
                             onChange={(e) => setForgotPasswordEmail(e.target.value)}
                             placeholder="Enter your email"
                             className={`input input-bordered w-full pl-10 ${errors.forgotPassword ? 'input-error' : ''}`}
-                            disabled={loading}
+                            disabled={isLoading}
                           />
                           <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40" />
                         </div>
@@ -323,10 +299,10 @@ const SignIn = () => {
 
                       <button
                         type="submit"
-                        disabled={loading}
+                        disabled={isLoading}
                         className="btn btn-primary btn-block"
                       >
-                        {loading ? (
+                        {isLoading ? (
                           <>
                             <span className="loading loading-spinner loading-sm"></span>
                             Sending...

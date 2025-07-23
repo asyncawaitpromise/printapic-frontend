@@ -1,10 +1,10 @@
 // Mock API Configuration
 const API_CONFIG = {
   // Environment settings
-  USE_MOCK_API: process.env.NODE_ENV === 'development' || !process.env.REACT_APP_API_URL,
+  USE_MOCK_API: import.meta.env?.MODE === 'development' || !import.meta.env?.VITE_API_URL,
   
   // API endpoints
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
+  BASE_URL: import.meta.env?.VITE_PB_URL || 'http://localhost:3001/api',
   
   // Mock settings
   MOCK_DELAYS: {

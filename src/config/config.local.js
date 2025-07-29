@@ -1,8 +1,8 @@
-// Local configuration file that reads from .env.local
+// Local configuration file that reads from .env
 // This file won't be overridden by server deployment processes
 
 const config = {
-  // PocketBase URL - reads from your .env.local file created by GitHub Actions
+  // PocketBase URL - reads from your .env file
   PB_URL: import.meta.env?.VITE_PB_URL || 'http://127.0.0.1:8090',
   
   // Development mode detection

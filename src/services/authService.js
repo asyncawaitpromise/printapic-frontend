@@ -3,7 +3,7 @@ import config from '../config/config.local.js';
 
 class AuthService {
   constructor() {
-    this.pb = new PocketBase(config.PB_URL);
+    this.pb = new PocketBase(config.VITE_PB_URL);
     this.pb.autoCancellation(false);
   }
 

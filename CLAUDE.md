@@ -85,7 +85,7 @@ This application is designed mobile-first with:
 
 ## Environment Setup
 
-Create `.env.local` with:
+Create `.env` with:
 ```
 VITE_PB_URL="your-pocketbase-url"
 ```

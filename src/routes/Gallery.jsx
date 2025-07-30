@@ -91,11 +91,23 @@ const Gallery = () => {
     syncInterval: 60000, // 1 minute
     onSyncComplete: useCallback((result) => {
       console.log('🔄 Background sync completed:', result.summary);
-      // Only reload if there were successful syncs
+      // Update photos with pbId from sync results instead of reloading
       if (result.summary.successful > 0) {
-        loadPhotos();
+        setPhotos(prev => prev.map(localPhoto => {
+          const syncResult = result.syncResults.find(r => r.localId === localPhoto.id);
+          if (syncResult && syncResult.status === 'synced') {
+            return {
+              ...localPhoto,
+              pbId: syncResult.pbId,
+              syncStatus: 'synced',
+              hasLocal: true,
+              hasRemote: true
+            };
+          }
+          return localPhoto;
+        }));
       }
-    }, [loadPhotos]),
+    }, []),
     onSyncError: (error) => {
       console.error('🔄 Background sync error:', error);
     }
@@ -121,10 +133,14 @@ const Gallery = () => {
 
   // Save photos to localStorage whenever photos state changes (only local photos)
   useEffect(() => {
-    // Only save photos that have local data (base64) to localStorage
+    // Only save photos that have local data (base64) to localStorage, but preserve pbId for synced photos
     const localPhotos = photos.filter(photo => 
       photo.hasLocal && photo.data && photo.data.startsWith('data:image/')
-    );
+    ).map(photo => ({
+      ...photo,
+      // Ensure pbId is preserved when saving to localStorage
+      pbId: photo.pbId || undefined
+    }));
     
     // Only update localStorage if there's a meaningful change
     const currentSaved = localStorage.getItem('captured-photos');
@@ -132,7 +148,7 @@ const Gallery = () => {
     
     if (currentSaved !== newSaved) {
       localStorage.setItem('captured-photos', newSaved);
-      console.log('🖼️ Local photos saved to localStorage:', localPhotos.length, 'photos');
+      console.log('🖼️ Local photos saved to localStorage:', localPhotos.length, 'photos (with pbId preserved)');
     }
   }, [photos]);
 

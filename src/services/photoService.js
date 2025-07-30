@@ -209,11 +209,15 @@ class PhotoService {
     const remotePhotos = remoteResult.success ? remoteResult.photos : [];
 
     // Create multiple maps for matching photos
+    const remoteByPbId = new Map();
     const remoteByOriginalId = new Map();
     const remoteByTimestamp = new Map();
     const processedRemoteIds = new Set();
     
     remotePhotos.forEach(photo => {
+      // Map by pbId for direct matching
+      remoteByPbId.set(photo.pbId, photo);
+      
       // Map by originalLocalId if available
       if (photo.originalLocalId) {
         remoteByOriginalId.set(photo.originalLocalId, photo);
@@ -231,7 +235,12 @@ class PhotoService {
 
     // Helper function to find matching remote photo
     const findMatchingRemote = (localPhoto) => {
-      // First try exact originalLocalId match
+      // First priority: exact pbId match (most reliable)
+      if (localPhoto.pbId && remoteByPbId.has(localPhoto.pbId)) {
+        return remoteByPbId.get(localPhoto.pbId);
+      }
+      
+      // Second priority: exact originalLocalId match
       if (remoteByOriginalId.has(localPhoto.id)) {
         return remoteByOriginalId.get(localPhoto.id);
       }

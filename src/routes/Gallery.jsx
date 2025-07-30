@@ -34,28 +34,6 @@ const Gallery = () => {
     triggerHapticFeedback
   } = useMobilePhotoSelection(photos, 50);
 
-  // Background photo sync
-  const {
-    syncStatus: backgroundSyncStatus,
-    photosToSyncCount,
-    lastSyncTime: backgroundLastSyncTime,
-    triggerSync: triggerBackgroundSync,
-    canSync
-  } = usePhotoSync(photos, {
-    autoSync: true,
-    syncInterval: 60000, // 1 minute
-    onSyncComplete: useCallback((result) => {
-      console.log('🔄 Background sync completed:', result.summary);
-      // Only reload if there were successful syncs
-      if (result.summary.successful > 0) {
-        loadPhotos();
-      }
-    }, [loadPhotos]),
-    onSyncError: (error) => {
-      console.error('🔄 Background sync error:', error);
-    }
-  });
-
   // Load and merge photos from localStorage and PocketBase
   const loadPhotos = useCallback(async () => {
     console.log('🖼️ Loading photos...');
@@ -101,11 +79,33 @@ const Gallery = () => {
     }
   }, []);
 
+  // Background photo sync (moved after loadPhotos definition)
+  const {
+    syncStatus: backgroundSyncStatus,
+    photosToSyncCount,
+    lastSyncTime: backgroundLastSyncTime,
+    triggerSync: triggerBackgroundSync,
+    canSync
+  } = usePhotoSync(photos, {
+    autoSync: true,
+    syncInterval: 60000, // 1 minute
+    onSyncComplete: useCallback((result) => {
+      console.log('🔄 Background sync completed:', result.summary);
+      // Only reload if there were successful syncs
+      if (result.summary.successful > 0) {
+        loadPhotos();
+      }
+    }, [loadPhotos]),
+    onSyncError: (error) => {
+      console.error('🔄 Background sync error:', error);
+    }
+  });
+
   // Load photos on component mount and when auth state changes
   useEffect(() => {
     console.log('🖼️ Gallery component mounted');
     loadPhotos();
-  }, []);
+  }, [loadPhotos]);
 
   // Listen for auth state changes
   useEffect(() => {

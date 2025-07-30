@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Zap, Eye, MoreVertical, Check } from 'react-feather';
+import { Camera, Upload, Zap, Eye, MoreVertical, Check, Cloud, CloudOff, AlertCircle } from 'react-feather';
 
 const MobilePhotoCard = ({ 
   photo, 
@@ -205,10 +205,16 @@ const MobilePhotoCard = ({
       >
         {/* Photo Image */}
         <img
-          src={photo.data}
+          src={photo.data || photo.remoteUrl || photo.thumbUrl}
           alt={`Photo ${index + 1}`}
           className="w-full h-full object-cover"
           loading="lazy"
+          onError={(e) => {
+            // Fallback to thumbnail if main image fails
+            if (photo.thumbUrl && e.target.src !== photo.thumbUrl) {
+              e.target.src = photo.thumbUrl;
+            }
+          }}
         />
 
         {/* Selection Checkbox */}
@@ -227,10 +233,20 @@ const MobilePhotoCard = ({
           </div>
         )}
 
-        {/* Source Badge */}
+        {/* Sync Status Badge */}
         <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
-          {getSourceIcon()}
-          <span className="capitalize">{photo.source}</span>
+          {photo.syncStatus === 'synced' && <Cloud size={12} className="text-green-400" />}
+          {photo.syncStatus === 'local_only' && <CloudOff size={12} className="text-yellow-400" />}
+          {photo.syncStatus === 'remote_only' && <Cloud size={12} className="text-blue-400" />}
+          {photo.syncStatus === 'syncing' && <span className="loading loading-spinner loading-xs"></span>}
+          {!photo.syncStatus && getSourceIcon()}
+          <span className="capitalize">
+            {photo.syncStatus === 'synced' ? 'Synced' :
+             photo.syncStatus === 'local_only' ? 'Local' :
+             photo.syncStatus === 'remote_only' ? 'Cloud' :
+             photo.syncStatus === 'syncing' ? 'Syncing' :
+             photo.source || 'Photo'}
+          </span>
         </div>
 
         {/* Processing Status */}
@@ -275,13 +291,28 @@ const MobilePhotoCard = ({
       {/* Photo Info */}
       <div className="mt-2 text-xs text-center">
         <div className="text-base-content/70 truncate">
-          {formatTimestamp(photo.timestamp)}
+          {formatTimestamp(photo.timestamp || photo.created)}
         </div>
-        {photo.metadata && (
-          <div className="text-base-content/50">
-            {photo.metadata.width}×{photo.metadata.height}
+        <div className="flex items-center justify-center gap-2 mt-1">
+          {/* Sync Status Indicator */}
+          <div className={`flex items-center gap-1 ${
+            photo.syncStatus === 'synced' ? 'text-success' :
+            photo.syncStatus === 'local_only' ? 'text-warning' :
+            photo.syncStatus === 'remote_only' ? 'text-info' :
+            'text-base-content/50'
+          }`}>
+            {photo.syncStatus === 'synced' && <Cloud size={10} />}
+            {photo.syncStatus === 'local_only' && <CloudOff size={10} />}
+            {photo.syncStatus === 'remote_only' && <Cloud size={10} />}
+            {photo.syncStatus === 'syncing' && <span className="loading loading-spinner loading-xs"></span>}
           </div>
-        )}
+          {/* Dimensions */}
+          {(photo.metadata || photo.width) && (
+            <div className="text-base-content/50">
+              {photo.metadata?.width || photo.width}×{photo.metadata?.height || photo.height}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Click outside to close quick actions */}

@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera as CameraIcon, Image, ArrowLeft, RotateCcw, Maximize, Minimize, X, Upload } from 'react-feather';
+import { Camera as CameraIcon, Image, ArrowLeft, RotateCcw, Maximize, Minimize, X, Upload, Cloud, CloudOff, Check, AlertCircle } from 'react-feather';
 import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
 import MobileFileUpload from '../components/MobileFileUpload';
+import { photoService } from '../services/photoService';
+import { authService } from '../services/authService';
 
 const Camera = () => {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ const Camera = () => {
   const [showFlash, setShowFlash] = useState(false);
   const [activeMode, setActiveMode] = useState('camera'); // 'camera' or 'upload'
   const containerRef = useRef(null);
+  const [syncStatus, setSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
+  const [syncMessage, setSyncMessage] = useState('');
 
   // Load photos from localStorage on component mount
   useEffect(() => {
@@ -201,7 +205,7 @@ const Camera = () => {
   }, [facingMode]);
 
   // Capture photo
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     console.log('📸 Capturing photo...');
     
     if (!videoRef.current || !canvasRef.current) {
@@ -237,7 +241,8 @@ const Camera = () => {
       data: imageData,
       timestamp: new Date().toISOString(),
       width: canvas.width,
-      height: canvas.height
+      height: canvas.height,
+      syncStatus: 'local_only'
     };
 
     console.log('📸 New photo created:', newPhoto.id, newPhoto.width + 'x' + newPhoto.height);
@@ -262,18 +267,135 @@ const Camera = () => {
     setTimeout(() => {
       setLastCapturedPhoto(null);
     }, 5000);
+
+    // Sync with PocketBase if user is authenticated
+    if (authService.isAuthenticated) {
+      syncPhotoToPocketBase(newPhoto);
+    }
   };
 
   // Handle uploaded files
   const handleFilesUploaded = (uploadedFiles) => {
     console.log('📤 Files uploaded:', uploadedFiles.length, 'files');
     
+    // Mark uploaded files as local_only initially
+    const markedFiles = uploadedFiles.map(file => ({
+      ...file,
+      syncStatus: 'local_only'
+    }));
+    
     // Add uploaded files to photos array
     setPhotos(prev => {
-      const updated = [...uploadedFiles, ...prev];
+      const updated = [...markedFiles, ...prev];
       console.log('📸 Photos array updated with uploads, total count:', updated.length);
       return updated;
     });
+
+    // Sync with PocketBase if user is authenticated
+    if (authService.isAuthenticated) {
+      markedFiles.forEach(photo => {
+        syncPhotoToPocketBase(photo);
+      });
+    }
+  };
+
+  // Sync individual photo to PocketBase
+  const syncPhotoToPocketBase = async (photo) => {
+    try {
+      setSyncStatus('syncing');
+      setSyncMessage('Syncing photo to cloud...');
+      
+      const result = await photoService.uploadPhoto(photo);
+      
+      if (result.success) {
+        // Update the photo in the local array with sync info
+        setPhotos(prev => prev.map(p => 
+          p.id === photo.id 
+            ? { ...p, pbId: result.photo.pbId, syncStatus: 'synced' }
+            : p
+        ));
+        
+        setSyncStatus('success');
+        setSyncMessage('Photo synced successfully!');
+        
+        // Clear status after 3 seconds
+        setTimeout(() => {
+          setSyncStatus('idle');
+          setSyncMessage('');
+        }, 3000);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Failed to sync photo:', error);
+      setSyncStatus('error');
+      setSyncMessage(`Sync failed: ${error.message}`);
+      
+      // Clear status after 5 seconds
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncMessage('');
+      }, 5000);
+    }
+  };
+
+  // Sync all local photos to PocketBase
+  const syncAllPhotos = async () => {
+    if (!authService.isAuthenticated) {
+      setSyncMessage('Please sign in to sync photos');
+      return;
+    }
+
+    const localOnlyPhotos = photos.filter(p => p.syncStatus === 'local_only');
+    
+    if (localOnlyPhotos.length === 0) {
+      setSyncMessage('All photos are already synced!');
+      setTimeout(() => setSyncMessage(''), 3000);
+      return;
+    }
+
+    try {
+      setSyncStatus('syncing');
+      setSyncMessage(`Syncing ${localOnlyPhotos.length} photos...`);
+      
+      const result = await photoService.syncLocalPhotos(localOnlyPhotos);
+      
+      if (result.success) {
+        // Update local photos with sync results
+        setPhotos(prev => prev.map(localPhoto => {
+          const syncResult = result.syncResults.find(r => r.localId === localPhoto.id);
+          if (syncResult && syncResult.status === 'synced') {
+            return {
+              ...localPhoto,
+              pbId: syncResult.pbId,
+              syncStatus: 'synced'
+            };
+          }
+          return localPhoto;
+        }));
+        
+        setSyncStatus('success');
+        setSyncMessage(`Synced ${result.summary.successful} photos successfully!`);
+        
+        if (result.summary.failed > 0) {
+          setTimeout(() => {
+            setSyncMessage(`${result.summary.failed} photos failed to sync`);
+          }, 3000);
+        }
+      } else {
+        throw new Error('Sync operation failed');
+      }
+    } catch (error) {
+      console.error('Failed to sync photos:', error);
+      setSyncStatus('error');
+      setSyncMessage(`Sync failed: ${error.message}`);
+    }
+    
+    // Clear status after 5 seconds
+    setTimeout(() => {
+      setSyncStatus('idle');
+      setSyncMessage('');
+    }, 5000);
   };
 
 
@@ -589,14 +711,75 @@ const Camera = () => {
                   )}
                 </div>
 
+                {/* Sync Status */}
+                {(syncStatus !== 'idle' || syncMessage) && (
+                  <div className={`alert mt-4 ${
+                    syncStatus === 'success' ? 'alert-success' : 
+                    syncStatus === 'error' ? 'alert-error' : 
+                    'alert-info'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {syncStatus === 'syncing' && <span className="loading loading-spinner loading-sm"></span>}
+                      {syncStatus === 'success' && <Check size={18} />}
+                      {syncStatus === 'error' && <AlertCircle size={18} />}
+                      <span className="text-sm">{syncMessage}</span>
+                    </div>
+                  </div>
+                )}
+
                 {photos.length > 0 && (
-                  <div className="mt-6 text-center">
-                    <p className="text-base-content/70">
-                      You have {photos.length} photo{photos.length !== 1 ? 's' : ''} saved.{' '}
-                      <Link to="/gallery" className="link link-primary">
+                  <div className="mt-6 text-center space-y-4">
+                    <div className="stats stats-horizontal bg-base-200 text-xs">
+                      <div className="stat py-2 px-3">
+                        <div className="stat-title text-xs">Total</div>
+                        <div className="stat-value text-sm">{photos.length}</div>
+                      </div>
+                      <div className="stat py-2 px-3">
+                        <div className="stat-title text-xs flex items-center gap-1">
+                          <Cloud size={12} /> Synced
+                        </div>
+                        <div className="stat-value text-sm text-success">
+                          {photos.filter(p => p.syncStatus === 'synced').length}
+                        </div>
+                      </div>
+                      <div className="stat py-2 px-3">
+                        <div className="stat-title text-xs flex items-center gap-1">
+                          <CloudOff size={12} /> Local Only
+                        </div>
+                        <div className="stat-value text-sm text-warning">
+                          {photos.filter(p => p.syncStatus === 'local_only').length}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Link to="/gallery" className="btn btn-primary btn-sm gap-2">
+                        <Image size={16} />
                         View Gallery
                       </Link>
-                    </p>
+                      
+                      {authService.isAuthenticated && photos.some(p => p.syncStatus === 'local_only') && (
+                        <button 
+                          className="btn btn-outline btn-sm gap-2"
+                          onClick={syncAllPhotos}
+                          disabled={syncStatus === 'syncing'}
+                        >
+                          {syncStatus === 'syncing' ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                          ) : (
+                            <Cloud size={16} />
+                          )}
+                          Sync All Photos
+                        </button>
+                      )}
+                      
+                      {!authService.isAuthenticated && (
+                        <Link to="/signin" className="btn btn-outline btn-sm gap-2">
+                          <Cloud size={16} />
+                          Sign In to Sync
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 )}
                 </>

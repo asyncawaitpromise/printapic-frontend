@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Camera, Package, Zap, Heart, Star, ArrowRight, Check, DollarSign, User, Menu, X, Info, Mail } from 'react-feather';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const Homepage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to camera page
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/camera', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   return (
     <div className="min-h-screen bg-base-100">

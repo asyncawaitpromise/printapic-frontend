@@ -36,8 +36,8 @@ export const PublicOnlyRoute = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    // Redirect to intended location or home
-    const from = location.state?.from?.pathname || '/';
+    // Redirect to intended location or camera
+    const from = location.state?.from?.pathname || '/camera';
     return <Navigate to={from} replace />;
   }
 

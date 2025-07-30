@@ -267,10 +267,10 @@ class PhotoService {
     const thumbUrl = this.getPhotoUrl(record, '300x0');
     
     return {
-      id: originalLocalPhoto?.id || record.id, // Keep original local ID if available
+      id: originalLocalPhoto?.id || `remote_${record.id}`, // Use local ID if available, otherwise create unique remote ID
       pbId: record.id, // PocketBase ID
       originalLocalId: originalLocalPhoto?.id, // Store reference to original local ID
-      data: photoUrl, // Use PocketBase URL instead of base64
+      data: originalLocalPhoto?.data || photoUrl, // Prefer local base64, fallback to remote URL
       remoteUrl: photoUrl,
       thumbUrl,
       caption: record.caption || '',

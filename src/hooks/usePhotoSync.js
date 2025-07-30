@@ -23,7 +23,8 @@ export const usePhotoSync = (photos = [], options = {}) => {
   // Get photos that need syncing
   const getPhotosToSync = useCallback(() => {
     return photos.filter(photo => 
-      photo.syncStatus === 'local_only' && 
+      photo.hasLocal && 
+      !photo.hasRemote && 
       photo.data && 
       photo.data.startsWith('data:image/')
     );

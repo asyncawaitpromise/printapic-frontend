@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Image, Trash2, Check, ArrowLeft, Camera as CameraIcon, X, Maximize2, CheckSquare, Square, Cloud, CloudOff, RefreshCw, AlertCircle } from 'react-feather';
 import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
@@ -44,18 +44,20 @@ const Gallery = () => {
   } = usePhotoSync(photos, {
     autoSync: true,
     syncInterval: 60000, // 1 minute
-    onSyncComplete: (result) => {
+    onSyncComplete: useCallback((result) => {
       console.log('🔄 Background sync completed:', result.summary);
-      // Reload photos to update sync status
-      loadPhotos();
-    },
+      // Only reload if there were successful syncs
+      if (result.summary.successful > 0) {
+        loadPhotos();
+      }
+    }, [loadPhotos]),
     onSyncError: (error) => {
       console.error('🔄 Background sync error:', error);
     }
   });
 
   // Load and merge photos from localStorage and PocketBase
-  const loadPhotos = async () => {
+  const loadPhotos = useCallback(async () => {
     console.log('🖼️ Loading photos...');
     setLoading(true);
     
@@ -83,7 +85,9 @@ const Gallery = () => {
         // Not authenticated, just use local photos with local_only status
         const photosWithStatus = localPhotos.map(photo => ({
           ...photo,
-          syncStatus: photo.syncStatus || 'local_only'
+          syncStatus: photo.syncStatus || 'local_only',
+          hasLocal: true,
+          hasRemote: false
         }));
         setPhotos(photosWithStatus);
         console.log('🖼️ Local photos loaded:', photosWithStatus.length, 'photos');
@@ -95,7 +99,7 @@ const Gallery = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Load photos on component mount and when auth state changes
   useEffect(() => {
@@ -113,16 +117,23 @@ const Gallery = () => {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [loadPhotos]);
 
   // Save photos to localStorage whenever photos state changes (only local photos)
   useEffect(() => {
     // Only save photos that have local data (base64) to localStorage
     const localPhotos = photos.filter(photo => 
-      photo.data && photo.data.startsWith('data:image/') && photo.syncStatus !== 'remote_only'
+      photo.hasLocal && photo.data && photo.data.startsWith('data:image/')
     );
-    localStorage.setItem('captured-photos', JSON.stringify(localPhotos));
-    console.log('🖼️ Local photos saved to localStorage:', localPhotos.length, 'photos');
+    
+    // Only update localStorage if there's a meaningful change
+    const currentSaved = localStorage.getItem('captured-photos');
+    const newSaved = JSON.stringify(localPhotos);
+    
+    if (currentSaved !== newSaved) {
+      localStorage.setItem('captured-photos', newSaved);
+      console.log('🖼️ Local photos saved to localStorage:', localPhotos.length, 'photos');
+    }
   }, [photos]);
 
   // Delete photo
@@ -287,7 +298,7 @@ const Gallery = () => {
   };
 
   // Refresh photos from PocketBase
-  const refreshPhotos = async () => {
+  const refreshPhotos = useCallback(async () => {
     if (!authService.isAuthenticated) {
       console.log('🖼️ Not authenticated, skipping refresh');
       return;
@@ -300,16 +311,16 @@ const Gallery = () => {
     setTimeout(() => {
       setSyncStatus('idle');
     }, 2000);
-  };
+  }, [loadPhotos]);
 
   // Sync all local photos to PocketBase
-  const syncAllLocalPhotos = async () => {
+  const syncAllLocalPhotos = useCallback(async () => {
     if (!authService.isAuthenticated) {
       alert('Please sign in to sync photos');
       return;
     }
 
-    const localOnlyPhotos = photos.filter(p => p.syncStatus === 'local_only');
+    const localOnlyPhotos = photos.filter(p => p.syncStatus === 'local_only' && p.hasLocal);
     
     if (localOnlyPhotos.length === 0) {
       alert('All photos are already synced!');
@@ -339,7 +350,7 @@ const Gallery = () => {
     setTimeout(() => {
       setSyncStatus('idle');
     }, 3000);
-  };
+  }, [photos, loadPhotos]);
 
   return (
     <div className="min-h-screen bg-base-100 pb-20">
@@ -473,7 +484,7 @@ const Gallery = () => {
                     <Cloud size={12} /> Synced
                   </div>
                   <div className="stat-value text-lg sm:text-2xl text-success">
-                    {photos.filter(p => p.syncStatus === 'synced').length}
+                    {photos.filter(p => p.hasRemote).length}
                   </div>
                   <div className="stat-desc text-xs">Cloud backup</div>
                 </div>
@@ -482,7 +493,7 @@ const Gallery = () => {
                     <CloudOff size={12} /> Local Only
                   </div>
                   <div className="stat-value text-lg sm:text-2xl text-warning">
-                    {photos.filter(p => p.syncStatus === 'local_only').length}
+                    {photos.filter(p => p.hasLocal && !p.hasRemote).length}
                   </div>
                   <div className="stat-desc text-xs">Not synced</div>
                 </div>
@@ -522,7 +533,7 @@ const Gallery = () => {
                     Take More Photos
                   </Link>
                   
-                  {authService.isAuthenticated && photos.some(p => p.syncStatus === 'local_only') && (
+                  {authService.isAuthenticated && photos.some(p => p.hasLocal && !p.hasRemote) && (
                     <button 
                       className="btn btn-outline btn-sm sm:btn-lg gap-2"
                       onClick={() => {

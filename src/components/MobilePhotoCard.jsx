@@ -235,15 +235,32 @@ const MobilePhotoCard = ({
 
         {/* Sync Status Badge */}
         <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
-          {photo.syncStatus === 'synced' && <Cloud size={12} className="text-green-400" />}
-          {photo.syncStatus === 'local_only' && <CloudOff size={12} className="text-yellow-400" />}
-          {photo.syncStatus === 'remote_only' && <Cloud size={12} className="text-blue-400" />}
-          {photo.syncStatus === 'syncing' && <span className="loading loading-spinner loading-xs"></span>}
-          {!photo.syncStatus && getSourceIcon()}
+          {/* Show dual indicators for photos that exist both locally and remotely */}
+          {photo.hasLocal && photo.hasRemote && (
+            <>
+              <CloudOff size={10} className="text-green-400" title="Stored locally" />
+              <Cloud size={10} className="text-green-400" title="Synced to cloud" />
+            </>
+          )}
+          {/* Local only */}
+          {photo.hasLocal && !photo.hasRemote && (
+            <CloudOff size={12} className="text-yellow-400" title="Local only" />
+          )}
+          {/* Remote only */}
+          {!photo.hasLocal && photo.hasRemote && (
+            <Cloud size={12} className="text-blue-400" title="Cloud only" />
+          )}
+          {/* Syncing */}
+          {photo.syncStatus === 'syncing' && (
+            <span className="loading loading-spinner loading-xs" title="Syncing..."></span>
+          )}
+          {/* Fallback to source icon if no sync info */}
+          {!photo.hasLocal && !photo.hasRemote && !photo.syncStatus && getSourceIcon()}
+          
           <span className="capitalize">
-            {photo.syncStatus === 'synced' ? 'Synced' :
-             photo.syncStatus === 'local_only' ? 'Local' :
-             photo.syncStatus === 'remote_only' ? 'Cloud' :
+            {photo.hasLocal && photo.hasRemote ? 'Synced' :
+             photo.hasLocal && !photo.hasRemote ? 'Local' :
+             !photo.hasLocal && photo.hasRemote ? 'Cloud' :
              photo.syncStatus === 'syncing' ? 'Syncing' :
              photo.source || 'Photo'}
           </span>
@@ -296,14 +313,23 @@ const MobilePhotoCard = ({
         <div className="flex items-center justify-center gap-2 mt-1">
           {/* Sync Status Indicator */}
           <div className={`flex items-center gap-1 ${
-            photo.syncStatus === 'synced' ? 'text-success' :
-            photo.syncStatus === 'local_only' ? 'text-warning' :
-            photo.syncStatus === 'remote_only' ? 'text-info' :
+            photo.hasLocal && photo.hasRemote ? 'text-success' :
+            photo.hasLocal && !photo.hasRemote ? 'text-warning' :
+            !photo.hasLocal && photo.hasRemote ? 'text-info' :
             'text-base-content/50'
           }`}>
-            {photo.syncStatus === 'synced' && <Cloud size={10} />}
-            {photo.syncStatus === 'local_only' && <CloudOff size={10} />}
-            {photo.syncStatus === 'remote_only' && <Cloud size={10} />}
+            {/* Show both icons for synced photos */}
+            {photo.hasLocal && photo.hasRemote && (
+              <>
+                <CloudOff size={8} title="Local" />
+                <Cloud size={8} title="Cloud" />
+              </>
+            )}
+            {/* Local only */}
+            {photo.hasLocal && !photo.hasRemote && <CloudOff size={10} title="Local only" />}
+            {/* Remote only */}
+            {!photo.hasLocal && photo.hasRemote && <Cloud size={10} title="Cloud only" />}
+            {/* Syncing */}
             {photo.syncStatus === 'syncing' && <span className="loading loading-spinner loading-xs"></span>}
           </div>
           {/* Dimensions */}

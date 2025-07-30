@@ -242,7 +242,9 @@ const Camera = () => {
       timestamp: new Date().toISOString(),
       width: canvas.width,
       height: canvas.height,
-      syncStatus: 'local_only'
+      syncStatus: 'local_only',
+      hasLocal: true,
+      hasRemote: false
     };
 
     console.log('📸 New photo created:', newPhoto.id, newPhoto.width + 'x' + newPhoto.height);
@@ -281,7 +283,9 @@ const Camera = () => {
     // Mark uploaded files as local_only initially
     const markedFiles = uploadedFiles.map(file => ({
       ...file,
-      syncStatus: 'local_only'
+      syncStatus: 'local_only',
+      hasLocal: true,
+      hasRemote: false
     }));
     
     // Add uploaded files to photos array
@@ -311,7 +315,7 @@ const Camera = () => {
         // Update the photo in the local array with sync info
         setPhotos(prev => prev.map(p => 
           p.id === photo.id 
-            ? { ...p, pbId: result.photo.pbId, syncStatus: 'synced' }
+            ? { ...p, pbId: result.photo.pbId, syncStatus: 'synced', hasLocal: true, hasRemote: true }
             : p
         ));
         
@@ -368,7 +372,9 @@ const Camera = () => {
             return {
               ...localPhoto,
               pbId: syncResult.pbId,
-              syncStatus: 'synced'
+              syncStatus: 'synced',
+              hasLocal: true,
+              hasRemote: true
             };
           }
           return localPhoto;
@@ -739,7 +745,7 @@ const Camera = () => {
                           <Cloud size={12} /> Synced
                         </div>
                         <div className="stat-value text-sm text-success">
-                          {photos.filter(p => p.syncStatus === 'synced').length}
+                          {photos.filter(p => p.hasRemote).length}
                         </div>
                       </div>
                       <div className="stat py-2 px-3">
@@ -747,7 +753,7 @@ const Camera = () => {
                           <CloudOff size={12} /> Local Only
                         </div>
                         <div className="stat-value text-sm text-warning">
-                          {photos.filter(p => p.syncStatus === 'local_only').length}
+                          {photos.filter(p => p.hasLocal && !p.hasRemote).length}
                         </div>
                       </div>
                     </div>
@@ -758,7 +764,7 @@ const Camera = () => {
                         View Gallery
                       </Link>
                       
-                      {authService.isAuthenticated && photos.some(p => p.syncStatus === 'local_only') && (
+                      {authService.isAuthenticated && photos.some(p => p.hasLocal && !p.hasRemote) && (
                         <button 
                           className="btn btn-outline btn-sm gap-2"
                           onClick={syncAllPhotos}

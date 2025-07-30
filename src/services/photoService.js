@@ -35,6 +35,10 @@ class PhotoService {
       formData.append('user', authService.currentUser.id);
       formData.append('image', file);
       formData.append('caption', caption);
+      formData.append('originalLocalId', photoData.id);
+      formData.append('timestamp', photoData.timestamp);
+      formData.append('width', photoData.width || '');
+      formData.append('height', photoData.height || '');
 
       // Upload to PocketBase
       const record = await this.pb.collection(this.collectionName).create(formData);
@@ -204,21 +208,101 @@ class PhotoService {
     const remoteResult = await this.getUserPhotos();
     const remotePhotos = remoteResult.success ? remoteResult.photos : [];
 
-    // Create map of remote photos by their original local ID (if available)
-    const remotePhotoMap = new Map();
+    // Create multiple maps for matching photos
+    const remoteByOriginalId = new Map();
+    const remoteByTimestamp = new Map();
+    const processedRemoteIds = new Set();
+    
     remotePhotos.forEach(photo => {
+      // Map by originalLocalId if available
       if (photo.originalLocalId) {
-        remotePhotoMap.set(photo.originalLocalId, photo);
+        remoteByOriginalId.set(photo.originalLocalId, photo);
+      }
+      // Map by timestamp as fallback (within 1 second tolerance)
+      if (photo.timestamp || photo.created) {
+        const timestamp = photo.timestamp || photo.created;
+        const timeKey = Math.floor(new Date(timestamp).getTime() / 1000);
+        if (!remoteByTimestamp.has(timeKey)) {
+          remoteByTimestamp.set(timeKey, []);
+        }
+        remoteByTimestamp.get(timeKey).push(photo);
       }
     });
 
+    // Helper function to find matching remote photo
+    const findMatchingRemote = (localPhoto) => {
+      // First try exact originalLocalId match
+      if (remoteByOriginalId.has(localPhoto.id)) {
+        return remoteByOriginalId.get(localPhoto.id);
+      }
+      
+      // Fallback: try timestamp match (within 5 seconds tolerance for network delays)
+      if (localPhoto.timestamp) {
+        const localTime = new Date(localPhoto.timestamp).getTime();
+        
+        // Check candidates within 5 second window
+        for (let i = -5; i <= 5; i++) {
+          const timeKey = Math.floor((localTime + (i * 1000)) / 1000);
+          const candidates = remoteByTimestamp.get(timeKey);
+          if (candidates) {
+            // If multiple candidates, try to match by dimensions
+            if (candidates.length === 1) {
+              return candidates[0];
+            } else if (localPhoto.width && localPhoto.height) {
+              const dimensionMatch = candidates.find(c => 
+                c.width == localPhoto.width && c.height == localPhoto.height
+              );
+              if (dimensionMatch) return dimensionMatch;
+            }
+            // Return first candidate if no better match
+            return candidates[0];
+          }
+        }
+      }
+      
+      // Last resort: try matching by dimensions and approximate file size
+      if (localPhoto.width && localPhoto.height && localPhoto.data) {
+        const dataSize = localPhoto.data.length;
+        const match = remotePhotos.find(remote => {
+          // Skip already processed photos
+          if (processedRemoteIds.has(remote.pbId)) return false;
+          
+          // Match by dimensions (if available)
+          const dimensionMatch = remote.width == localPhoto.width && 
+                                 remote.height == localPhoto.height;
+          
+          // Rough timestamp proximity (within 1 minute)
+          let timeMatch = false;
+          if (localPhoto.timestamp && remote.timestamp) {
+            const timeDiff = Math.abs(
+              new Date(localPhoto.timestamp).getTime() - 
+              new Date(remote.timestamp).getTime()
+            );
+            timeMatch = timeDiff < 60000; // 1 minute
+            
+          } else if (localPhoto.timestamp && remote.created) {
+            const timeDiff = Math.abs(
+              new Date(localPhoto.timestamp).getTime() - 
+              new Date(remote.created).getTime()
+            );
+            timeMatch = timeDiff < 60000; // 1 minute
+          }
+          
+          return dimensionMatch && timeMatch;
+        });
+        
+        if (match) return match;
+      }
+      
+      return null;
+    };
+
     // Merge local and remote photos
     const mergedPhotos = [];
-    const processedLocalIds = new Set();
 
     // Process local photos first
     localPhotos.forEach(localPhoto => {
-      const remotePhoto = remotePhotoMap.get(localPhoto.id);
+      const remotePhoto = findMatchingRemote(localPhoto);
       
       if (remotePhoto) {
         // Photo exists both locally and remotely - mark as synced
@@ -226,29 +310,38 @@ class PhotoService {
           ...localPhoto,
           pbId: remotePhoto.pbId,
           syncStatus: 'synced',
+          hasLocal: true,
+          hasRemote: true,
           remoteUrl: remotePhoto.remoteUrl,
           remoteCreated: remotePhoto.created,
           remoteUpdated: remotePhoto.updated
         });
+        processedRemoteIds.add(remotePhoto.pbId);
       } else {
         // Photo exists only locally - mark as local only
         mergedPhotos.push({
           ...localPhoto,
-          syncStatus: 'local_only'
+          syncStatus: 'local_only',
+          hasLocal: true,
+          hasRemote: false
         });
       }
-      
-      processedLocalIds.add(localPhoto.id);
     });
 
     // Add remote-only photos (uploaded from other devices)
     remotePhotos.forEach(remotePhoto => {
-      if (!remotePhoto.originalLocalId || !processedLocalIds.has(remotePhoto.originalLocalId)) {
-        mergedPhotos.push({
-          ...remotePhoto,
-          syncStatus: 'remote_only'
-        });
+      // Skip if we already processed this remote photo when matching with local
+      if (processedRemoteIds.has(remotePhoto.pbId)) {
+        return;
       }
+      
+      // This is a remote-only photo (uploaded from another device or local was deleted)
+      mergedPhotos.push({
+        ...remotePhoto,
+        syncStatus: 'remote_only',
+        hasLocal: false,
+        hasRemote: true
+      });
     });
 
     // Sort by timestamp (newest first)
@@ -267,20 +360,22 @@ class PhotoService {
     const thumbUrl = this.getPhotoUrl(record, '300x0');
     
     return {
-      id: originalLocalPhoto?.id || `remote_${record.id}`, // Use local ID if available, otherwise create unique remote ID
+      id: originalLocalPhoto?.id || record.originalLocalId || `remote_${record.id}`, // Use local ID if available, otherwise create unique remote ID
       pbId: record.id, // PocketBase ID
-      originalLocalId: originalLocalPhoto?.id, // Store reference to original local ID
+      originalLocalId: record.originalLocalId || originalLocalPhoto?.id, // Store reference to original local ID
       data: originalLocalPhoto?.data || photoUrl, // Prefer local base64, fallback to remote URL
       remoteUrl: photoUrl,
       thumbUrl,
       caption: record.caption || '',
-      timestamp: originalLocalPhoto?.timestamp || record.created,
-      width: originalLocalPhoto?.width || null,
-      height: originalLocalPhoto?.height || null,
+      timestamp: record.timestamp || originalLocalPhoto?.timestamp || record.created,
+      width: record.width || originalLocalPhoto?.width || null,
+      height: record.height || originalLocalPhoto?.height || null,
       created: record.created,
       updated: record.updated,
       userId: record.user,
-      syncStatus: 'synced'
+      syncStatus: originalLocalPhoto ? 'synced' : 'remote_only',
+      hasLocal: !!originalLocalPhoto,
+      hasRemote: true
     };
   }
 }

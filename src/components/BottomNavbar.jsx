@@ -29,7 +29,7 @@ const BottomNavbar = () => {
 
   return (
     <div className="btm-nav bg-base-100 border-t border-base-300 shadow-lg flex">
-      <div className="flex-grow-[1] cursor-default"></div>
+      <div className="flex-grow-[1] cursor-default hidden sm:block"></div>
       <Link 
         to="/pricing" 
         className={isActive('/pricing') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
@@ -65,7 +65,7 @@ const BottomNavbar = () => {
       >
         <LogOut size={22} />
       </button>
-      <div className="flex-grow-[1] cursor-default"></div>
+      <div className="flex-grow-[1] cursor-default hidden sm:block"></div>
     </div>
   );
 };

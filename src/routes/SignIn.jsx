@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, AlertCircle } from 'react-feather';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import BottomNavbar from '../components/BottomNavbar';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -124,14 +123,14 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
+    <div className="min-h-screen bg-base-100">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
           
           {/* Header */}
           <div className="text-center mb-8">
             <button 
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="btn btn-ghost btn-sm gap-2 mb-4"
             >
               <ArrowLeft size={16} />
@@ -343,9 +342,6 @@ const SignIn = () => {
           </div>
         </div>
       </div>
-      
-      {/* Bottom Navigation */}
-      <BottomNavbar />
     </div>
   );
 };

@@ -91,35 +91,35 @@ const Homepage = () => {
 
       {/* Hero Section */}
       <div className="hero min-h-[70vh] bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10 pt-16">
-        <div className="hero-content text-center max-w-6xl">
+        <div className="hero-content text-center max-w-6xl px-4">
           <div>
-            <h1 className="text-6xl font-bold leading-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 px-4">
               Magical Photo Customization & 
               <span className="text-primary"> Sticker Printing</span>
             </h1>
-            <p className="text-xl text-base-content/70 mb-8 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-base-content/70 mb-8 max-w-3xl mx-auto px-4">
               Use our token-based system to customize photos with magic and print high-quality stickers. 
               Just 2 tokens to enhance any photo with magic, and 400 tokens to print and ship beautiful 
               stickers right to your door!
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/camera" className="btn btn-primary btn-lg gap-2">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
+              <Link to="/camera" className="btn btn-primary btn-md sm:btn-lg gap-2 w-full sm:w-auto">
                 <Camera size={20} />
                 Get Started with Tokens
               </Link>
-              <button className="btn btn-outline btn-lg gap-2">
+              <button className="btn btn-outline btn-md sm:btn-lg gap-2 w-full sm:w-auto">
                 <Package size={20} />
                 View Examples
               </button>
             </div>
-            <div className="flex items-center justify-center gap-4 mt-8 text-sm text-base-content/60">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mt-8 text-xs sm:text-sm text-base-content/60 px-4">
               <div className="flex items-center gap-2">
                 <Star size={16} className="text-warning fill-current" />
                 <span>4.9/5 rating</span>
               </div>
-              <span>•</span>
+              <span className="hidden sm:inline">•</span>
               <span>Token-based pricing</span>
-              <span>•</span>
+              <span className="hidden sm:inline">•</span>
               <span>Magic photo enhancement</span>
             </div>
           </div>

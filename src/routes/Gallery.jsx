@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
 import { useMobilePhotoSelection } from '../hooks/useMobilePhotoSelection';
 import { usePhotoSync } from '../hooks/usePhotoSync';
+import { useStickerProcessor } from '../hooks/useStickerProcessor';
 import MobileBulkActions from '../components/MobileBulkActions';
 import MobilePhotoCard from '../components/MobilePhotoCard';
 import MobileStickerCustomizer from '../components/MobileStickerCustomizer';
@@ -19,6 +20,21 @@ const Gallery = () => {
   const [loading, setLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState('idle');
   const [lastSyncTime, setLastSyncTime] = useState(null);
+  
+  // Sticker processing
+  const {
+    status: stickerStatus,
+    editId: stickerEditId,
+    resultUrl: stickerResultUrl,
+    error: stickerError,
+    progress: stickerProgress,
+    message: stickerMessage,
+    isProcessing: isStickerProcessing,
+    isComplete: isStickerComplete,
+    hasError: hasStickerError,
+    createSticker,
+    reset: resetSticker
+  } = useStickerProcessor();
   
   // Multi-select functionality
   const {
@@ -177,11 +193,33 @@ const Gallery = () => {
     }
   };
 
-  // Convert to sticker (placeholder)
-  const convertToSticker = (photoId) => {
-    console.log('🎯 Converting photo to sticker:', photoId);
-    // Placeholder function for future sticker conversion
-    alert(`Converting photo ${photoId} to sticker - This feature will be implemented later!`);
+  // Convert to sticker
+  const convertToSticker = async (photo) => {
+    console.log('🎯 Converting photo to sticker:', photo);
+    
+    try {
+      // Check if photo is synced to PocketBase
+      if (!photo.pbId && !photo.hasRemote) {
+        throw new Error('Photo must be synced to cloud before creating sticker. Please sync this photo first.');
+      }
+      
+      // Use PocketBase record ID
+      const pocketbaseRecordId = photo.pbId;
+      if (!pocketbaseRecordId) {
+        throw new Error('PocketBase record ID not found. Please sync this photo first.');
+      }
+      
+      const result = await createSticker(pocketbaseRecordId);
+      console.log('🎯 Sticker created successfully:', result);
+      
+      // Show success message
+      if (result.result_url) {
+        alert('Sticker created successfully! You can download it from the expanded photo view.');
+      }
+    } catch (error) {
+      console.error('🎯 Failed to create sticker:', error);
+      alert(`Failed to create sticker: ${error.message}`);
+    }
   };
 
   // Clear all photos
@@ -626,6 +664,64 @@ const Gallery = () => {
               </div>
             </div>
             
+            {/* Sticker Processing Status */}
+            {(isStickerProcessing || isStickerComplete || hasStickerError) && (
+              <div className="mb-4 p-4 bg-base-200 rounded-lg">
+                <h4 className="font-semibold mb-2">Sticker Processing</h4>
+                
+                {/* Status Message */}
+                <div className={`mb-2 ${
+                  hasStickerError ? 'text-error' : 
+                  isStickerComplete ? 'text-success' : 
+                  'text-info'
+                }`}>
+                  {stickerMessage}
+                </div>
+                
+                {/* Progress Bar */}
+                {isStickerProcessing && (
+                  <div className="mb-2">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Progress</span>
+                      <span>{stickerProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${stickerProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Error Display */}
+                {hasStickerError && (
+                  <div className="alert alert-error py-2">
+                    <AlertCircle size={16} />
+                    <span className="text-sm">{stickerError}</span>
+                  </div>
+                )}
+                
+                {/* Result */}
+                {isStickerComplete && stickerResultUrl && (
+                  <div className="space-y-2">
+                    <img
+                      src={stickerResultUrl}
+                      alt="Generated sticker"
+                      className="max-w-full h-auto max-h-32 rounded-lg border mx-auto"
+                    />
+                    <a
+                      href={stickerResultUrl}
+                      download="sticker.png"
+                      className="btn btn-success btn-sm w-full"
+                    >
+                      Download Sticker
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="modal-action">
               <button 
                 className="btn btn-error gap-2"
@@ -637,19 +733,46 @@ const Gallery = () => {
                 <Trash2 size={16} />
                 Delete Photo
               </button>
-              <button 
-                className="btn btn-primary gap-2"
-                onClick={() => {
-                  convertToSticker(expandedPhoto.id);
-                  closeExpandedPhoto();
-                }}
-              >
-                <Check size={16} />
-                Make Sticker
-              </button>
+              
+              {!isStickerProcessing ? (
+                <button 
+                  className={`btn gap-2 ${
+                    expandedPhoto.pbId || expandedPhoto.hasRemote 
+                      ? 'btn-primary' 
+                      : 'btn-disabled'
+                  }`}
+                  onClick={() => convertToSticker(expandedPhoto)}
+                  disabled={isStickerProcessing || (!expandedPhoto.pbId && !expandedPhoto.hasRemote)}
+                  title={
+                    expandedPhoto.pbId || expandedPhoto.hasRemote
+                      ? 'Create sticker from this photo'
+                      : 'Photo must be synced to cloud first'
+                  }
+                >
+                  <Check size={16} />
+                  {expandedPhoto.pbId || expandedPhoto.hasRemote ? 'Make Sticker' : 'Sync Required'}
+                </button>
+              ) : (
+                <button className="btn btn-primary gap-2 loading" disabled>
+                  Processing...
+                </button>
+              )}
+              
+              {(isStickerComplete || hasStickerError) && (
+                <button 
+                  className="btn btn-outline gap-2"
+                  onClick={resetSticker}
+                >
+                  Reset
+                </button>
+              )}
+              
               <button 
                 className="btn btn-outline"
-                onClick={closeExpandedPhoto}
+                onClick={() => {
+                  closeExpandedPhoto();
+                  resetSticker();
+                }}
               >
                 Close
               </button>

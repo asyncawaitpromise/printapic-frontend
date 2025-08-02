@@ -8,12 +8,12 @@ import { getStatusClasses, getStatusBadge, formatProcessingTime } from '../utils
  * @param {string} props.photoId - Photo ID to process
  * @param {Function} [props.onComplete] - Callback when sticker is complete
  * @param {Function} [props.onError] - Callback when error occurs
+ * @param {Function} [props.onRefreshPhotos] - Callback to refresh photo list
  */
-const StickerProcessor = ({ photoId, onComplete, onError }) => {
+const StickerProcessor = ({ photoId, onComplete, onError, onRefreshPhotos }) => {
   const {
     status,
     editId,
-    resultUrl,
     error,
     progress,
     message,
@@ -36,6 +36,13 @@ const StickerProcessor = ({ photoId, onComplete, onError }) => {
       }
     }
   };
+
+  // Trigger photo refresh when sticker processing is complete
+  React.useEffect(() => {
+    if (isComplete && onRefreshPhotos) {
+      onRefreshPhotos();
+    }
+  }, [isComplete, onRefreshPhotos]);
 
   const statusBadge = getStatusBadge(status);
   const statusClasses = getStatusClasses(status);
@@ -90,16 +97,6 @@ const StickerProcessor = ({ photoId, onComplete, onError }) => {
         </div>
       )}
 
-      {/* Result Image */}
-      {isComplete && resultUrl && (
-        <div className="mb-4">
-          <img
-            src={resultUrl}
-            alt="Generated sticker"
-            className="max-w-full h-auto rounded-lg border"
-          />
-        </div>
-      )}
 
       {/* Action Buttons */}
       <div className="flex gap-2">
@@ -119,22 +116,13 @@ const StickerProcessor = ({ photoId, onComplete, onError }) => {
           </button>
         )}
 
-        {isComplete && resultUrl && (
-          <>
-            <a
-              href={resultUrl}
-              download="sticker.png"
-              className="btn btn-success"
-            >
-              Download Sticker
-            </a>
-            <button
-              onClick={reset}
-              className="btn btn-outline"
-            >
-              Create Another
-            </button>
-          </>
+        {isComplete && (
+          <button
+            onClick={reset}
+            className="btn btn-outline"
+          >
+            Create Another
+          </button>
         )}
 
         {hasError && (

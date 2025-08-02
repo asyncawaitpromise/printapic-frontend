@@ -212,15 +212,23 @@ const Gallery = () => {
       const result = await createSticker(pocketbaseRecordId);
       console.log('🎯 Sticker created successfully:', result);
       
-      // Show success message
-      if (result.result_url) {
-        alert('Sticker created successfully! You can download it from the expanded photo view.');
+      // Refresh photo list to show the new processed photo
+      if (result.status === 'done') {
+        await loadPhotos();
+        alert('Sticker processing complete! The result has been added to your gallery.');
       }
     } catch (error) {
       console.error('🎯 Failed to create sticker:', error);
       alert(`Failed to create sticker: ${error.message}`);
     }
   };
+
+  // Monitor sticker completion and refresh photos
+  useEffect(() => {
+    if (isStickerComplete) {
+      loadPhotos();
+    }
+  }, [isStickerComplete, loadPhotos]);
 
   // Clear all photos
   const clearAllPhotos = () => {

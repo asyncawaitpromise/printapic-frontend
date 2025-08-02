@@ -8,7 +8,6 @@ import stickerService from '../services/stickerService.js';
 export const useStickerProcessor = () => {
   const [status, setStatus] = useState('idle');
   const [editId, setEditId] = useState(null);
-  const [resultUrl, setResultUrl] = useState(null);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState('');
@@ -30,13 +29,12 @@ export const useStickerProcessor = () => {
       const result = await stickerService.pollUntilComplete(newEditId, (update) => {
         setStatus(update.status);
         setProgress(getProgress(update.status));
-        setMessage(getStatusMessage(update.status));
+        setMessage(update.message || getStatusMessage(update.status));
       });
 
-      setResultUrl(result.result_url);
       setStatus('complete');
       setProgress(100);
-      setMessage('Sticker ready!');
+      setMessage(result.message || 'Processing complete. Check your photos for the result.');
 
       return result;
 
@@ -55,7 +53,6 @@ export const useStickerProcessor = () => {
   const reset = useCallback(() => {
     setStatus('idle');
     setEditId(null);
-    setResultUrl(null);
     setError(null);
     setProgress(0);
     setMessage('');
@@ -80,7 +77,6 @@ export const useStickerProcessor = () => {
     // State
     status,
     editId,
-    resultUrl,
     error,
     progress,
     message,

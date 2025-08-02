@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Image, Trash2, Check, ArrowLeft, Camera as CameraIcon, X, Maximize2, CheckSquare, Square, Cloud, CloudOff, RefreshCw, AlertCircle } from 'react-feather';
+import { Image, Camera as CameraIcon, CheckSquare, Square, Cloud, RefreshCw, AlertCircle } from 'react-feather';
 import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
+import ExpandedPhotoModal from '../components/ExpandedPhotoModal';
+import PhotoStats from '../components/PhotoStats';
 import { useMobilePhotoSelection } from '../hooks/useMobilePhotoSelection';
 import { usePhotoSync } from '../hooks/usePhotoSync';
 import { useStickerProcessor } from '../hooks/useStickerProcessor';
@@ -535,40 +537,7 @@ const Gallery = () => {
           ) : (
             <>
               {/* Stats bar */}
-              <div className="stats shadow mb-4 sm:mb-6 w-full text-xs sm:text-sm">
-                <div className="stat py-3 sm:py-4">
-                  <div className="stat-title text-xs">Total Photos</div>
-                  <div className="stat-value text-lg sm:text-2xl text-primary">{photos.length}</div>
-                  <div className="stat-desc text-xs">All photos</div>
-                </div>
-                <div className="stat py-3 sm:py-4">
-                  <div className="stat-title text-xs flex items-center gap-1">
-                    <Cloud size={12} /> Synced
-                  </div>
-                  <div className="stat-value text-lg sm:text-2xl text-success">
-                    {photos.filter(p => p.hasRemote).length}
-                  </div>
-                  <div className="stat-desc text-xs">Cloud backup</div>
-                </div>
-                <div className="stat py-3 sm:py-4">
-                  <div className="stat-title text-xs flex items-center gap-1">
-                    <CloudOff size={12} /> Local Only
-                  </div>
-                  <div className="stat-value text-lg sm:text-2xl text-warning">
-                    {photos.filter(p => p.hasLocal && !p.hasRemote).length}
-                  </div>
-                  <div className="stat-desc text-xs">Not synced</div>
-                </div>
-                <div className="stat py-3 sm:py-4">
-                  <div className="stat-title text-xs">Latest Photo</div>
-                  <div className="stat-value text-lg sm:text-2xl text-accent">
-                    {photos[0] ? new Date(photos[0]?.timestamp || photos[0]?.created).toLocaleDateString() : 'None'}
-                  </div>
-                  <div className="stat-desc text-xs">
-                    {photos[0] ? new Date(photos[0]?.timestamp || photos[0]?.created).toLocaleTimeString() : ''}
-                  </div>
-                </div>
-              </div>
+              <PhotoStats photos={photos} />
 
               {/* Photo grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
@@ -634,161 +603,24 @@ const Gallery = () => {
       </div>
       
       {/* Expanded Photo Modal */}
-      {expandedPhoto && (
-        <div className="modal modal-open">
-          <div className="modal-box w-11/12 max-w-5xl p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">
-                Photo #{photos.findIndex(p => p.id === expandedPhoto.id) + 1}
-              </h3>
-              <button 
-                className="btn btn-circle btn-sm"
-                onClick={closeExpandedPhoto}
-              >
-                <X size={16} />
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <img 
-                src={expandedPhoto.data} 
-                alt={`Expanded photo ${expandedPhoto.id}`}
-                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-              <div>
-                <span className="font-semibold">Date:</span> {new Date(expandedPhoto.timestamp).toLocaleDateString()}
-              </div>
-              <div>
-                <span className="font-semibold">Time:</span> {new Date(expandedPhoto.timestamp).toLocaleTimeString()}
-              </div>
-              <div>
-                <span className="font-semibold">Dimensions:</span> {expandedPhoto.width}×{expandedPhoto.height}
-              </div>
-              <div>
-                <span className="font-semibold">Size:</span> {(expandedPhoto.data.length / 1024).toFixed(1)}KB
-              </div>
-            </div>
-            
-            {/* Sticker Processing Status */}
-            {(isStickerProcessing || isStickerComplete || hasStickerError) && (
-              <div className="mb-4 p-4 bg-base-200 rounded-lg">
-                <h4 className="font-semibold mb-2">Sticker Processing</h4>
-                
-                {/* Status Message */}
-                <div className={`mb-2 ${
-                  hasStickerError ? 'text-error' : 
-                  isStickerComplete ? 'text-success' : 
-                  'text-info'
-                }`}>
-                  {stickerMessage}
-                </div>
-                
-                {/* Progress Bar */}
-                {isStickerProcessing && (
-                  <div className="mb-2">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Progress</span>
-                      <span>{stickerProgress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${stickerProgress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Error Display */}
-                {hasStickerError && (
-                  <div className="alert alert-error py-2">
-                    <AlertCircle size={16} />
-                    <span className="text-sm">{stickerError}</span>
-                  </div>
-                )}
-                
-                {/* Result */}
-                {isStickerComplete && stickerResultUrl && (
-                  <div className="space-y-2">
-                    <img
-                      src={stickerResultUrl}
-                      alt="Generated sticker"
-                      className="max-w-full h-auto max-h-32 rounded-lg border mx-auto"
-                    />
-                    <a
-                      href={stickerResultUrl}
-                      download="sticker.png"
-                      className="btn btn-success btn-sm w-full"
-                    >
-                      Download Sticker
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            <div className="modal-action">
-              <button 
-                className="btn btn-error gap-2"
-                onClick={() => {
-                  deletePhoto(expandedPhoto.id);
-                  closeExpandedPhoto();
-                }}
-              >
-                <Trash2 size={16} />
-                Delete Photo
-              </button>
-              
-              {!isStickerProcessing ? (
-                <button 
-                  className={`btn gap-2 ${
-                    expandedPhoto.pbId || expandedPhoto.hasRemote 
-                      ? 'btn-primary' 
-                      : 'btn-disabled'
-                  }`}
-                  onClick={() => convertToSticker(expandedPhoto)}
-                  disabled={isStickerProcessing || (!expandedPhoto.pbId && !expandedPhoto.hasRemote)}
-                  title={
-                    expandedPhoto.pbId || expandedPhoto.hasRemote
-                      ? 'Create sticker from this photo'
-                      : 'Photo must be synced to cloud first'
-                  }
-                >
-                  <Check size={16} />
-                  {expandedPhoto.pbId || expandedPhoto.hasRemote ? 'Make Sticker' : 'Sync Required'}
-                </button>
-              ) : (
-                <button className="btn btn-primary gap-2 loading" disabled>
-                  Processing...
-                </button>
-              )}
-              
-              {(isStickerComplete || hasStickerError) && (
-                <button 
-                  className="btn btn-outline gap-2"
-                  onClick={resetSticker}
-                >
-                  Reset
-                </button>
-              )}
-              
-              <button 
-                className="btn btn-outline"
-                onClick={() => {
-                  closeExpandedPhoto();
-                  resetSticker();
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={closeExpandedPhoto}></div>
-        </div>
-      )}
+      <ExpandedPhotoModal
+        photo={expandedPhoto}
+        photos={photos}
+        isOpen={!!expandedPhoto}
+        onClose={closeExpandedPhoto}
+        onDelete={deletePhoto}
+        onConvertToSticker={convertToSticker}
+        stickerProcessing={{
+          isProcessing: isStickerProcessing,
+          isComplete: isStickerComplete,
+          hasError: hasStickerError,
+          error: stickerError,
+          progress: stickerProgress,
+          message: stickerMessage,
+          resultUrl: stickerResultUrl,
+          onReset: resetSticker
+        }}
+      />
       
       {/* Mobile Bulk Actions */}
       {isSelectionMode && (

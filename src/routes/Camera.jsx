@@ -9,6 +9,7 @@ import { authService } from '../services/authService';
 const Camera = () => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const fullscreenVideoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   
@@ -97,8 +98,11 @@ const Camera = () => {
       console.log('🎥 Video tracks:', stream.getVideoTracks());
       
       if (videoRef.current) {
-        console.log('🎥 Setting stream to video element');
+        console.log('🎥 Setting stream to video elements');
         videoRef.current.srcObject = stream;
+        if (fullscreenVideoRef.current) {
+          fullscreenVideoRef.current.srcObject = stream;
+        }
         streamRef.current = stream;
         
         // Add event listeners to video element for debugging
@@ -185,6 +189,9 @@ const Camera = () => {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    if (fullscreenVideoRef.current) {
+      fullscreenVideoRef.current.srcObject = null;
+    }
     setIsStreaming(false);
     console.log('🛑 Camera stopped');
   };
@@ -208,14 +215,17 @@ const Camera = () => {
   const capturePhoto = async () => {
     console.log('📸 Capturing photo...');
     
-    if (!videoRef.current || !canvasRef.current) {
+    // Use the appropriate video element based on current mode
+    const currentVideo = isArtificialFullscreen ? fullscreenVideoRef.current : videoRef.current;
+    
+    if (!currentVideo || !canvasRef.current) {
       console.error('📸 Video or canvas ref is null');
-      console.log('📸 videoRef.current:', videoRef.current);
+      console.log('📸 currentVideo:', currentVideo);
       console.log('📸 canvasRef.current:', canvasRef.current);
       return;
     }
 
-    const video = videoRef.current;
+    const video = currentVideo;
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
@@ -452,6 +462,18 @@ const Camera = () => {
   };
 
 
+  // Sync video streams when switching between modes
+  useEffect(() => {
+    if (streamRef.current) {
+      if (videoRef.current && !isArtificialFullscreen) {
+        videoRef.current.srcObject = streamRef.current;
+      }
+      if (fullscreenVideoRef.current && isArtificialFullscreen) {
+        fullscreenVideoRef.current.srcObject = streamRef.current;
+      }
+    }
+  }, [isArtificialFullscreen]);
+
   // Clean up stream on component unmount
   useEffect(() => {
     return () => {
@@ -464,8 +486,9 @@ const Camera = () => {
       {/* Artificial Fullscreen Overlay - renders over everything */}
       {isArtificialFullscreen && isStreaming && (
         <div className="fixed inset-0 z-[9999] bg-black">
+          {/* Video element for fullscreen */}
           <video
-            ref={videoRef}
+            ref={fullscreenVideoRef}
             autoPlay
             playsInline
             muted
@@ -582,9 +605,9 @@ const Camera = () => {
                   ref={containerRef}
                   className="relative bg-black rounded-lg overflow-hidden aspect-[4/3] sm:aspect-video max-h-[70vh] sm:max-h-none"
                 >
-                  {/* Always render video element, but control visibility */}
+                  {/* Video element for regular view */}
                   <video
-                    ref={videoRef}
+                    ref={isArtificialFullscreen ? null : videoRef}
                     autoPlay
                     playsInline
                     muted

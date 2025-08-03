@@ -11,6 +11,7 @@ const ExpandedPhotoModal = ({
   onClose,
   onDelete,
   onConvertToSticker,
+  onNewPhotoCreated,
   stickerProcessing: {
     isProcessing,
     isComplete,
@@ -107,9 +108,10 @@ const ExpandedPhotoModal = ({
             // Refresh token balance
             imageProcessingService.getUserTokenBalance().then(setUserTokens);
             
-            // Optionally trigger a photo gallery refresh
-            if (statusUpdate.newPhotoRecord) {
+            // Trigger gallery refresh when new photo is created
+            if (statusUpdate.newPhotoRecord && onNewPhotoCreated) {
               console.log('🖼️ New photo created:', statusUpdate.newPhotoRecord.id);
+              onNewPhotoCreated(statusUpdate.newPhotoRecord);
             }
             
           } else if (statusUpdate.status === 'error') {

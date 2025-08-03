@@ -247,6 +247,13 @@ const Gallery = () => {
     setExpandedPhoto(photo);
   };
 
+  // Handle new photo created from artistic effects
+  const handleNewPhotoCreated = useCallback(async (newPhotoRecord) => {
+    console.log('🖼️ Gallery: New photo created from artistic effect:', newPhotoRecord.id);
+    // Refresh the entire photo list to include the new photo
+    await loadPhotos();
+  }, [loadPhotos]);
+
   // Close expanded photo
   const closeExpandedPhoto = () => {
     setExpandedPhoto(null);
@@ -618,6 +625,7 @@ const Gallery = () => {
         onClose={closeExpandedPhoto}
         onDelete={deletePhoto}
         onConvertToSticker={convertToSticker}
+        onNewPhotoCreated={handleNewPhotoCreated}
         stickerProcessing={{
           isProcessing: isStickerProcessing,
           isComplete: isStickerComplete,

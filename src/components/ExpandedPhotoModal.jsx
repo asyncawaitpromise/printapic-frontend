@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Trash2, Check, AlertCircle, Settings, Edit3, Star, Camera, Layers, Aperture, PenTool } from 'react-feather';
 import StickerProcessingStatus from './StickerProcessingStatus';
-import { usePhotoProcessing } from '../hooks/usePhotoProcessing';
 import { PROMPT_STYLES } from '../data/workflowData';
+import { imageProcessingService } from '../services/imageProcessingService';
 
 const ExpandedPhotoModal = ({
   photo,
@@ -23,88 +23,182 @@ const ExpandedPhotoModal = ({
   }
 }) => {
   const [showEditingOptions, setShowEditingOptions] = useState(true);
-  
-  const {
-    workflows,
-    startProcessing,
-    error: processingError
-  } = usePhotoProcessing();
+  const [apiProcessingState, setApiProcessingState] = useState({
+    isProcessing: false,
+    error: null,
+    message: '',
+    currentEffect: null
+  });
+  const [userTokens, setUserTokens] = useState(0);
+
+  // Load user token balance
+  useEffect(() => {
+    const loadTokenBalance = async () => {
+      try {
+        const balance = await imageProcessingService.getUserTokenBalance();
+        setUserTokens(balance);
+      } catch (error) {
+        console.error('Failed to load token balance:', error);
+      }
+    };
+
+    if (isOpen) {
+      loadTokenBalance();
+    }
+  }, [isOpen]);
+
+  // Cleanup subscriptions on unmount
+  useEffect(() => {
+    return () => {
+      imageProcessingService.cleanupAll();
+    };
+  }, []);
   
   if (!isOpen || !photo) return null;
 
   const photoIndex = photos.findIndex(p => p.id === photo.id);
 
-  // Helper function to start AI processing with prompt key
+  // Handle artistic effects using the real API
   const handleArtisticEffect = async (promptKey) => {
+    if (!photo.pbId) {
+      setApiProcessingState({
+        isProcessing: false,
+        error: 'Photo must be synced to cloud before processing. Please sync this photo first.',
+        message: '',
+        currentEffect: null
+      });
+      return;
+    }
+
+    // Check token balance
+    const hasTokens = await imageProcessingService.hasEnoughTokens(1);
+    if (!hasTokens) {
+      setApiProcessingState({
+        isProcessing: false,
+        error: 'Insufficient tokens. You need 1 token to process this image.',
+        message: '',
+        currentEffect: null
+      });
+      return;
+    }
+
     try {
-      const aiStyleWorkflow = workflows.find(w => w.id === 'ai_style_transfer');
-      if (aiStyleWorkflow) {
-        await startProcessing(photo.id, 'ai_style_transfer', { promptKey });
-      }
+      setApiProcessingState({
+        isProcessing: true,
+        error: null,
+        message: 'Starting AI processing...',
+        currentEffect: promptKey
+      });
+
+      const result = await imageProcessingService.processImage(
+        photo.pbId, 
+        promptKey,
+        (statusUpdate) => {
+          console.log('📊 Processing status update:', statusUpdate);
+          
+          if (statusUpdate.status === 'complete') {
+            setApiProcessingState({
+              isProcessing: false,
+              error: null,
+              message: statusUpdate.message,
+              currentEffect: null
+            });
+            
+            // Refresh token balance
+            imageProcessingService.getUserTokenBalance().then(setUserTokens);
+            
+            // Optionally trigger a photo gallery refresh
+            if (statusUpdate.newPhotoRecord) {
+              console.log('🖼️ New photo created:', statusUpdate.newPhotoRecord.id);
+            }
+            
+          } else if (statusUpdate.status === 'error') {
+            setApiProcessingState({
+              isProcessing: false,
+              error: statusUpdate.message,
+              message: '',
+              currentEffect: null
+            });
+          } else {
+            setApiProcessingState(prev => ({
+              ...prev,
+              message: statusUpdate.message
+            }));
+          }
+        }
+      );
+
+      console.log('✅ Processing started:', result);
+      
+      setApiProcessingState(prev => ({
+        ...prev,
+        message: result.message
+      }));
+
     } catch (err) {
-      console.error('Failed to start artistic effect:', err);
+      console.error('❌ Failed to start artistic effect:', err);
+      setApiProcessingState({
+        isProcessing: false,
+        error: err.message,
+        message: '',
+        currentEffect: null
+      });
     }
   };
 
-  // Helper function to start other workflows
-  const handleWorkflowEffect = async (workflowId) => {
-    try {
-      await startProcessing(photo.id, workflowId);
-    } catch (err) {
-      console.error('Failed to start workflow:', err);
-    }
+  // Helper to reset API processing state
+  const resetApiProcessing = () => {
+    setApiProcessingState({
+      isProcessing: false,
+      error: null,
+      message: '',
+      currentEffect: null
+    });
+    imageProcessingService.cleanupAll();
   };
 
-  // Create artistic editing options - mix of original functionality and new workflows
-  const editingOptions = [
-    // Original sticker functionality (keep working as before)
-    {
-      id: 'sticker',
-      label: 'Sticker-ify',
-      icon: Layers,
-      action: () => onConvertToSticker(photo),
-      disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-      className: 'btn-primary',
-      tooltip: photo.pbId || photo.hasRemote ? 'Convert to sticker with transparent background' : 'Photo must be synced to cloud first'
-    },
-    // New AI artistic effects (only if workflows are loaded)
-    ...(workflows.length > 0 ? PROMPT_STYLES.filter(style => style.key !== 'sticker').map(style => {
-      const iconMap = {
-        'line-art': PenTool,
-        'van-gogh': Aperture,
-        'manga-style': Camera,
-        'oil-painting': Star
-      };
-      
-      return {
-        id: style.key,
-        label: style.name,
-        icon: iconMap[style.key] || Edit3,
-        action: () => handleArtisticEffect(style.key),
-        disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-        className: 'btn-secondary',
-        tooltip: style.description
-      };
-    }) : []),
-    // Other workflow-based effects (only if workflows are loaded)
-    ...(workflows.length > 0 ? workflows.filter(w => w.id !== 'ai_style_transfer').map(workflow => {
-      const iconMap = {
-        'remove_background': Layers,
-        'enhance_colors': Star,
-        'vintage_filter': Camera
-      };
-      
-      return {
-        id: workflow.id,
-        label: workflow.name,
-        icon: iconMap[workflow.id] || Edit3,
-        action: () => handleWorkflowEffect(workflow.id),
-        disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-        className: 'btn-accent',
-        tooltip: workflow.description
-      };
-    }) : [])
-  ];
+  // Create artistic editing options using the real API
+  const editingOptions = PROMPT_STYLES.map(style => {
+    const iconMap = {
+      'sticker': Layers,
+      'line-art': PenTool,
+      'van-gogh': Aperture,
+      'manga-style': Camera,
+      'oil-painting': Star
+    };
+
+    const isDisabled = apiProcessingState.isProcessing || 
+                      isProcessing || 
+                      (!photo.pbId && !photo.hasRemote) ||
+                      userTokens < 1;
+
+    let tooltip = style.description;
+    if (!photo.pbId && !photo.hasRemote) {
+      tooltip = 'Photo must be synced to cloud first';
+    } else if (userTokens < 1) {
+      tooltip = 'Insufficient tokens (1 token required)';
+    } else if (apiProcessingState.isProcessing) {
+      tooltip = 'Processing in progress...';
+    }
+
+    return {
+      id: style.key,
+      label: style.name,
+      icon: iconMap[style.key] || Edit3,
+      action: () => {
+        // Use original sticker functionality for backward compatibility
+        if (style.key === 'sticker') {
+          onConvertToSticker(photo);
+        } else {
+          handleArtisticEffect(style.key);
+        }
+      },
+      disabled: isDisabled,
+      className: style.key === 'sticker' ? 'btn-primary' : 'btn-secondary',
+      tooltip: tooltip,
+      tokensRequired: 1
+    };
+  });
 
   return (
     <div className="modal modal-open">
@@ -165,7 +259,12 @@ const ExpandedPhotoModal = ({
         {/* Artistic Effects Section */}
         <div className="mb-4">
           <div className="flex justify-between items-center mb-3">
-            <h4 className="font-semibold text-md">Artistic Effects</h4>
+            <div>
+              <h4 className="font-semibold text-md">Artistic Effects</h4>
+              <p className="text-xs text-base-content/60">
+                Tokens: {userTokens} | 1 token per effect
+              </p>
+            </div>
             <button 
               className="btn btn-sm btn-ghost"
               onClick={() => setShowEditingOptions(!showEditingOptions)}
@@ -177,10 +276,26 @@ const ExpandedPhotoModal = ({
           
           {showEditingOptions && (
             <div>
-              {processingError && (
+              {apiProcessingState.error && (
                 <div className="alert alert-error mb-3">
                   <AlertCircle size={16} />
-                  <span className="text-sm">{processingError}</span>
+                  <span className="text-sm">{apiProcessingState.error}</span>
+                </div>
+              )}
+              
+              {apiProcessingState.isProcessing && (
+                <div className="alert alert-info mb-3">
+                  <div className="loading loading-spinner loading-sm"></div>
+                  <span className="text-sm">
+                    {apiProcessingState.message || 'Processing your image...'}
+                  </span>
+                </div>
+              )}
+              
+              {apiProcessingState.message && !apiProcessingState.isProcessing && !apiProcessingState.error && (
+                <div className="alert alert-success mb-3">
+                  <Check size={16} />
+                  <span className="text-sm">{apiProcessingState.message}</span>
                 </div>
               )}
               
@@ -220,10 +335,13 @@ const ExpandedPhotoModal = ({
         {/* Bottom Actions */}
         <div className="flex flex-col gap-2 pt-4 border-t border-base-300">
           {/* Reset Button - Only show when needed */}
-          {(isComplete || hasError) && (
+          {(isComplete || hasError || apiProcessingState.error || apiProcessingState.message) && (
             <button 
               className="btn btn-sm btn-outline gap-2"
-              onClick={onReset}
+              onClick={() => {
+                onReset();
+                resetApiProcessing();
+              }}
             >
               Reset
             </button>
@@ -248,6 +366,7 @@ const ExpandedPhotoModal = ({
               onClick={() => {
                 onClose();
                 onReset();
+                resetApiProcessing();
               }}
             >
               Close

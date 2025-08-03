@@ -180,7 +180,7 @@ const Gallery = () => {
     // If photo is synced to PocketBase, delete from there too
     if (photo.pbId && authService.isAuthenticated) {
       try {
-        const result = await photoService.deletePhoto(photo.pbId);
+        const result = await photoService.deletePhoto(photo.pbId, photo.collectionType);
         console.log('🗑️ Photo deleted from PocketBase:', photo.pbId);
       } catch (error) {
         console.error('🗑️ Failed to delete from PocketBase:', error);
@@ -264,7 +264,7 @@ const Gallery = () => {
       const syncedPhotos = selectedPhotos.filter(p => p.pbId);
       for (const photo of syncedPhotos) {
         try {
-          const result = await photoService.deletePhoto(photo.pbId);
+          const result = await photoService.deletePhoto(photo.pbId, photo.collectionType);
           console.log('🗑️ Bulk deleted from PocketBase:', photo.pbId);
         } catch (error) {
           console.error('🗑️ Failed to bulk delete from PocketBase:', error);

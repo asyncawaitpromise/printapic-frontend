@@ -56,24 +56,48 @@ class PhotoService {
     }
   }
 
-  // Get all user's photos from PocketBase
+  // Get all user's photos from PocketBase (both original photos and processed edits)
   async getUserPhotos() {
     if (!this.isAuthenticated) {
       return { success: false, error: 'User not authenticated' };
     }
 
     try {
-      const records = await this.pb.collection(this.collectionName).getFullList({
-        filter: `user = "${authService.currentUser.id}"`,
+      const userId = authService.currentUser.id;
+      
+      // Get original photos
+      const photoRecords = await this.pb.collection(this.collectionName).getFullList({
+        filter: `user = "${userId}"`,
         sort: '-created',
         expand: 'user'
       });
 
-      const photos = records.map(record => this._formatPhotoRecord(record));
+      // Get processed edits (these are also "photos" from user perspective)
+      let editRecords = [];
+      try {
+        editRecords = await this.pb.collection('printapic_edits').getFullList({
+          filter: `user = "${userId}" && status = "done" && result_image != ""`,
+          sort: '-created',
+          expand: 'user,photo'
+        });
+      } catch (editError) {
+        console.warn('Could not fetch processed edits:', editError.message);
+      }
+
+      // Format all records
+      const originalPhotos = photoRecords.map(record => this._formatPhotoRecord(record, null, 'photos'));
+      const processedPhotos = editRecords.map(record => this._formatEditRecord(record));
+      
+      // Combine and sort by creation date
+      const allPhotos = [...originalPhotos, ...processedPhotos].sort((a, b) => {
+        const aTime = new Date(a.created || a.timestamp || 0).getTime();
+        const bTime = new Date(b.created || b.timestamp || 0).getTime();
+        return bTime - aTime; // Newest first
+      });
       
       return {
         success: true,
-        photos
+        photos: allPhotos
       };
     } catch (error) {
       console.error('Failed to get user photos:', error);
@@ -85,18 +109,56 @@ class PhotoService {
     }
   }
 
-  // Delete photo from PocketBase
-  async deletePhoto(photoId) {
+  // Delete photo from PocketBase (auto-detects collection type)
+  async deletePhoto(photoId, collectionType = null) {
     if (!this.isAuthenticated) {
       throw new Error('User must be authenticated to delete photos');
     }
 
+    // If no collection type specified, try to auto-detect
+    if (!collectionType) {
+      collectionType = await this.detectPhotoCollection(photoId);
+    }
+
     try {
-      await this.pb.collection(this.collectionName).delete(photoId);
+      let collectionName;
+      
+      // Determine which collection to delete from
+      if (collectionType === 'edits') {
+        collectionName = 'printapic_edits';
+      } else {
+        collectionName = this.collectionName; // 'printapic_photos'
+      }
+      
+      await this.pb.collection(collectionName).delete(photoId);
+      console.log(`✅ Deleted from ${collectionName}:`, photoId);
       return { success: true };
     } catch (error) {
       console.error('Failed to delete photo:', error);
       throw new Error(error.message || 'Failed to delete photo from cloud');
+    }
+  }
+
+  // Auto-detect which collection a photo belongs to
+  async detectPhotoCollection(photoId) {
+    try {
+      // First try printapic_photos
+      try {
+        await this.pb.collection('printapic_photos').getOne(photoId);
+        return 'photos';
+      } catch (photoError) {
+        // If not found in photos, try edits
+        try {
+          await this.pb.collection('printapic_edits').getOne(photoId);
+          return 'edits';
+        } catch (editError) {
+          console.warn(`Photo ${photoId} not found in either collection`);
+          return 'photos'; // Default fallback
+        }
+      }
+    } catch (error) {
+      console.error('Error detecting photo collection:', error);
+      return 'photos'; // Default fallback
     }
   }
 
@@ -125,10 +187,12 @@ class PhotoService {
   }
 
   // Get photo URL from PocketBase
-  getPhotoUrl(record, thumb = '500x0') {
-    if (!record.image) return null;
+  getPhotoUrl(record, fieldName = 'image', thumb = '500x0') {
+    // Handle both image field (for photos) and result_image field (for edits)
+    const imageField = fieldName === 'result_image' ? record.result_image : record.image;
+    if (!imageField) return null;
     
-    return this.pb.files.getUrl(record, record.image, { thumb });
+    return this.pb.files.getUrl(record, imageField, { thumb });
   }
 
   // Sync local photos with PocketBase
@@ -361,13 +425,14 @@ class PhotoService {
   }
 
   // Format PocketBase record to match local photo format
-  _formatPhotoRecord(record, originalLocalPhoto = null) {
+  _formatPhotoRecord(record, originalLocalPhoto = null, collectionType = 'photos') {
     const photoUrl = this.getPhotoUrl(record);
     const thumbUrl = this.getPhotoUrl(record, '300x0');
     
     return {
       id: originalLocalPhoto?.id || record.originalLocalId || `remote_${record.id}`, // Use local ID if available, otherwise create unique remote ID
       pbId: record.id, // PocketBase ID
+      collectionType: collectionType, // Track which collection this belongs to
       originalLocalId: record.originalLocalId || originalLocalPhoto?.id, // Store reference to original local ID
       data: originalLocalPhoto?.data || photoUrl, // Prefer local base64, fallback to remote URL
       remoteUrl: photoUrl,
@@ -382,6 +447,36 @@ class PhotoService {
       syncStatus: originalLocalPhoto ? 'synced' : 'remote_only',
       hasLocal: !!originalLocalPhoto,
       hasRemote: true
+    };
+  }
+
+  // Format PocketBase edit record to match local photo format
+  _formatEditRecord(record) {
+    const photoUrl = this.getPhotoUrl(record, 'result_image');
+    const thumbUrl = this.getPhotoUrl(record, 'result_image', '300x0');
+    
+    return {
+      id: `edit_${record.id}`, // Unique ID for processed photos
+      pbId: record.id, // PocketBase ID
+      collectionType: 'edits', // Mark as processed edit
+      originalLocalId: null, // Edits don't have local counterparts
+      data: photoUrl, // Use the processed result image
+      remoteUrl: photoUrl,
+      thumbUrl,
+      caption: `Processed: ${record.expand?.photo?.caption || 'Photo'}`, // Indicate it's processed
+      timestamp: record.completed || record.created,
+      width: null, // Edit records might not have dimensions
+      height: null,
+      created: record.created,
+      updated: record.updated,
+      userId: record.user,
+      syncStatus: 'remote_only', // Processed photos are always remote
+      hasLocal: false,
+      hasRemote: true,
+      processing: {
+        status: record.status,
+        tokensUsed: record.tokens_cost
+      }
     };
   }
 }

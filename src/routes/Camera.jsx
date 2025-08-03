@@ -460,7 +460,80 @@ const Camera = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
+    <>
+      {/* Artificial Fullscreen Overlay - renders over everything */}
+      {isArtificialFullscreen && isStreaming && (
+        <div className="fixed inset-0 z-[9999] bg-black">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
+          
+          {/* Artificial fullscreen controls */}
+          <>
+            {/* Main capture button */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+              <button 
+                className="btn btn-circle btn-lg bg-white/20 text-white border-white/30 hover:bg-white/30"
+                onClick={capturePhoto}
+              >
+                <CameraIcon size={32} />
+              </button>
+            </div>
+            
+            {/* Top controls */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              <button
+                className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                onClick={toggleFullscreen}
+                title="Exit Fullscreen"
+              >
+                <Minimize size={20} />
+              </button>
+            </div>
+            
+            {/* Side controls */}
+            <div className="absolute bottom-8 left-4">
+              <button
+                className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                onClick={switchCamera}
+                title="Switch Camera"
+              >
+                <RotateCcw size={20} />
+              </button>
+            </div>
+          </>
+
+          {/* Last captured photo preview in fullscreen */}
+          {lastCapturedPhoto && (
+            <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-lg overflow-hidden shadow-lg border-2 border-white">
+              <img 
+                src={lastCapturedPhoto.data} 
+                alt="Last captured" 
+                className="w-full h-full object-cover"
+              />
+              <button
+                className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 btn btn-circle btn-xs bg-red-500 text-white border-none hover:bg-red-600"
+                onClick={() => setLastCapturedPhoto(null)}
+                title="Close preview"
+              >
+                <X size={10} className="sm:w-3 sm:h-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Camera flash effect in fullscreen */}
+          {showFlash && (
+            <div className="absolute inset-0 bg-white opacity-70 pointer-events-none animate-ping" 
+                 style={{animationDuration: '200ms', animationIterationCount: 1}}></div>
+          )}
+        </div>
+      )}
+
+      <div className="min-h-screen bg-base-100 pb-20">
 
       {/* Camera Interface */}
         <div className="container mx-auto px-4 py-8">
@@ -507,11 +580,7 @@ const Camera = () => {
 
                 <div 
                   ref={containerRef}
-                  className={`relative bg-black rounded-lg overflow-hidden ${
-                    isArtificialFullscreen
-                      ? 'fixed inset-0 z-50 rounded-none' 
-                      : 'aspect-[4/3] sm:aspect-video max-h-[70vh] sm:max-h-none'
-                  }`}
+                  className="relative bg-black rounded-lg overflow-hidden aspect-[4/3] sm:aspect-video max-h-[70vh] sm:max-h-none"
                 >
                   {/* Always render video element, but control visibility */}
                   <video
@@ -519,7 +588,7 @@ const Camera = () => {
                     autoPlay
                     playsInline
                     muted
-                    className={`w-full h-full object-cover ${isStreaming ? 'block' : 'hidden'}`}
+                    className={`w-full h-full object-cover ${isStreaming && !isArtificialFullscreen ? 'block' : 'hidden'}`}
                     onLoadedData={() => console.log('🎥 Video onLoadedData fired')}
                     onLoadStart={() => console.log('🎥 Video onLoadStart fired')}
                     onCanPlay={() => console.log('🎥 Video onCanPlay fired')}
@@ -538,7 +607,7 @@ const Camera = () => {
                   )}
                   
                   {/* Camera controls overlay - moved to bottom */}
-                  {isStreaming && !isArtificialFullscreen && (
+                  {isStreaming && (
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3">
                       <button
                         className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
@@ -576,45 +645,9 @@ const Camera = () => {
                     </div>
                   )}
 
-                  {/* Artificial fullscreen controls */}
-                  {isArtificialFullscreen && isStreaming && (
-                    <>
-                      {/* Main capture button */}
-                      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-                        <button 
-                          className="btn btn-circle btn-lg bg-white/20 text-white border-white/30 hover:bg-white/30"
-                          onClick={capturePhoto}
-                        >
-                          <CameraIcon size={32} />
-                        </button>
-                      </div>
-                      
-                      {/* Top controls */}
-                      <div className="absolute top-4 right-4 flex gap-2">
-                        <button
-                          className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
-                          onClick={toggleFullscreen}
-                          title="Exit Fullscreen"
-                        >
-                          <Minimize size={20} />
-                        </button>
-                      </div>
-                      
-                      {/* Side controls */}
-                      <div className="absolute bottom-8 left-4">
-                        <button
-                          className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
-                          onClick={switchCamera}
-                          title="Switch Camera"
-                        >
-                          <RotateCcw size={20} />
-                        </button>
-                      </div>
-                    </>
-                  )}
 
                   {/* Last captured photo preview */}
-                  {lastCapturedPhoto && isStreaming && (
+                  {lastCapturedPhoto && isStreaming && !isArtificialFullscreen && (
                     <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-lg overflow-hidden shadow-lg border-2 border-white">
                       <img 
                         src={lastCapturedPhoto.data} 
@@ -632,7 +665,7 @@ const Camera = () => {
                   )}
 
                   {/* Camera flash effect */}
-                  {showFlash && (
+                  {showFlash && !isArtificialFullscreen && (
                     <div className="absolute inset-0 bg-white opacity-70 pointer-events-none animate-ping" 
                          style={{animationDuration: '200ms', animationIterationCount: 1}}></div>
                   )}
@@ -765,7 +798,8 @@ const Camera = () => {
         
         {/* Bottom Navigation */}
         <BottomNavbar />
-    </div>
+      </div>
+    </>
   );
 };
 

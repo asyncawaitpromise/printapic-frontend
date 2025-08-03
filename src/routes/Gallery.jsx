@@ -52,50 +52,62 @@ const Gallery = () => {
     triggerHapticFeedback
   } = useMobilePhotoSelection(photos, 50);
 
-  // Load and merge photos from localStorage and PocketBase
+  // Load photos from PocketBase or fallback to localStorage
   const loadPhotos = useCallback(async () => {
     console.log('🖼️ Loading photos...');
     setLoading(true);
     
     try {
-      // Load from localStorage first
-      const savedPhotos = localStorage.getItem('captured-photos');
-      let localPhotos = [];
-      
-      if (savedPhotos) {
-        try {
-          localPhotos = JSON.parse(savedPhotos);
-          console.log('🖼️ Loaded photos from localStorage:', localPhotos.length, 'photos');
-        } catch (e) {
-          console.error('🖼️ Error loading photos from localStorage:', e);
-        }
-      }
-      
-      // If user is authenticated, merge with PocketBase photos
       if (authService.isAuthenticated) {
-        console.log('🖼️ User authenticated, merging with PocketBase photos...');
-        const mergedPhotos = await photoService.getMergedPhotos(localPhotos);
-        setPhotos(mergedPhotos);
-        console.log('🖼️ Merged photos loaded:', mergedPhotos.length, 'total photos');
+        console.log('🖼️ User authenticated, loading from PocketBase...');
+        const result = await photoService.getUserPhotos();
+        if (result.success) {
+          setPhotos(result.photos);
+          console.log('🖼️ Photos loaded from PocketBase:', result.photos.length, 'photos');
+        } else {
+          console.error('🖼️ Error loading photos from PocketBase:', result.error);
+          // Fallback to localStorage if PocketBase fails
+          loadPhotosFromLocalStorage();
+        }
       } else {
-        // Not authenticated, just use local photos with local_only status
-        const photosWithStatus = localPhotos.map(photo => ({
-          ...photo,
-          syncStatus: photo.syncStatus || 'local_only',
-          hasLocal: true,
-          hasRemote: false
-        }));
-        setPhotos(photosWithStatus);
-        console.log('🖼️ Local photos loaded:', photosWithStatus.length, 'photos');
+        console.log('🖼️ User not authenticated, loading from localStorage');
+        loadPhotosFromLocalStorage();
       }
       
       setLastSyncTime(new Date());
     } catch (error) {
       console.error('🖼️ Error loading photos:', error);
+      // Fallback to localStorage on error
+      loadPhotosFromLocalStorage();
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Fallback method to load from localStorage when not authenticated
+  const loadPhotosFromLocalStorage = () => {
+    const savedPhotos = localStorage.getItem('captured-photos');
+    let localPhotos = [];
+    
+    if (savedPhotos) {
+      try {
+        localPhotos = JSON.parse(savedPhotos);
+        console.log('🖼️ Loaded photos from localStorage:', localPhotos.length, 'photos');
+      } catch (e) {
+        console.error('🖼️ Error loading photos from localStorage:', e);
+      }
+    }
+    
+    // Mark all localStorage photos as local_only
+    const photosWithStatus = localPhotos.map(photo => ({
+      ...photo,
+      syncStatus: 'local_only',
+      hasLocal: true,
+      hasRemote: false
+    }));
+    setPhotos(photosWithStatus);
+    console.log('🖼️ Local photos loaded:', photosWithStatus.length, 'photos');
+  };
 
   // Background photo sync (moved after loadPhotos definition)
   const {
@@ -149,24 +161,22 @@ const Gallery = () => {
     };
   }, [loadPhotos]);
 
-  // Save photos to localStorage whenever photos state changes (only local photos)
+  // Only save to localStorage when user is not authenticated (offline fallback)
   useEffect(() => {
-    // Only save photos that have local data (base64) to localStorage, but preserve pbId for synced photos
-    const localPhotos = photos.filter(photo => 
-      photo.hasLocal && photo.data && photo.data.startsWith('data:image/')
-    ).map(photo => ({
-      ...photo,
-      // Ensure pbId is preserved when saving to localStorage
-      pbId: photo.pbId || undefined
-    }));
-    
-    // Only update localStorage if there's a meaningful change
-    const currentSaved = localStorage.getItem('captured-photos');
-    const newSaved = JSON.stringify(localPhotos);
-    
-    if (currentSaved !== newSaved) {
-      localStorage.setItem('captured-photos', newSaved);
-      console.log('🖼️ Local photos saved to localStorage:', localPhotos.length, 'photos (with pbId preserved)');
+    if (!authService.isAuthenticated) {
+      // Only save photos that have local data (base64) to localStorage
+      const localPhotos = photos.filter(photo => 
+        photo.hasLocal && photo.data && photo.data.startsWith('data:image/')
+      );
+      
+      // Only update localStorage if there's a meaningful change
+      const currentSaved = localStorage.getItem('captured-photos');
+      const newSaved = JSON.stringify(localPhotos);
+      
+      if (currentSaved !== newSaved) {
+        localStorage.setItem('captured-photos', newSaved);
+        console.log('🖼️ Local photos saved to localStorage (offline mode):', localPhotos.length, 'photos');
+      }
     }
   }, [photos]);
 
@@ -392,7 +402,7 @@ const Gallery = () => {
     }, 2000);
   }, [loadPhotos]);
 
-  // Sync all local photos to PocketBase
+  // Sync all local photos to PocketBase (fallback only)
   const syncAllLocalPhotos = useCallback(async () => {
     if (!authService.isAuthenticated) {
       alert('Please sign in to sync photos');
@@ -412,7 +422,7 @@ const Gallery = () => {
       const result = await photoService.syncLocalPhotos(localOnlyPhotos);
       
       if (result.success) {
-        // Reload photos to get updated sync status
+        // Reload photos from PocketBase to get the updated state
         await loadPhotos();
         setSyncStatus('success');
         alert(`Successfully synced ${result.summary.successful} photos!`);
@@ -518,7 +528,7 @@ const Gallery = () => {
                 <div className="alert alert-warning py-2">
                   <AlertCircle size={16} />
                   <span className="text-sm">
-                    <Link to="/signin" className="link">Sign in</Link> to sync your photos to the cloud
+                    <Link to="/signin" className="link">Sign in</Link> to save your photos to the cloud
                   </span>
                 </div>
               )}
@@ -579,7 +589,7 @@ const Gallery = () => {
                     Take More Photos
                   </Link>
                   
-                  {authService.isAuthenticated && photos.some(p => p.hasLocal && !p.hasRemote) && (
+                  {authService.isAuthenticated && photos.some(p => p.syncStatus === 'local_only') && (
                     <button 
                       className="btn btn-outline btn-sm sm:btn-lg gap-2"
                       onClick={() => {
@@ -597,7 +607,7 @@ const Gallery = () => {
                       ) : (
                         <Cloud size={16} className="sm:w-5 sm:h-5" />
                       )}
-                      Sync All to Cloud
+                      Sync Local Photos
                     </button>
                   )}
                   

@@ -20,11 +20,11 @@ export const usePhotoSync = (photos = [], options = {}) => {
   const [lastSyncTime, setLastSyncTime] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Get photos that need syncing
+  // Get photos that need syncing (only local_only photos as fallback)
   const getPhotosToSync = useCallback(() => {
     return photos.filter(photo => 
+      photo.syncStatus === 'local_only' &&
       photo.hasLocal && 
-      !photo.hasRemote && 
       photo.data && 
       photo.data.startsWith('data:image/')
     );
@@ -99,7 +99,7 @@ export const usePhotoSync = (photos = [], options = {}) => {
     return syncPhotos();
   }, [syncPhotos]);
 
-  // Background sync effect
+  // Background sync effect - only for fallback scenarios
   useEffect(() => {
     if (!autoSync || !authService.isAuthenticated) {
       return;
@@ -107,11 +107,11 @@ export const usePhotoSync = (photos = [], options = {}) => {
 
     const photosToSync = getPhotosToSync();
     
-    // Only run background sync if there are photos to sync and we're not already syncing
+    // Only run background sync if there are local_only photos that need syncing
     if (photosToSync.length > 0 && syncStatus === 'idle') {
-      console.log(`🔄 Background sync: ${photosToSync.length} photos pending`);
+      console.log(`🔄 Background sync: ${photosToSync.length} local photos pending`);
       
-      // Immediate sync for new photos
+      // Immediate sync for recent local photos (could be from offline usage)
       const recentPhotos = photosToSync.filter(photo => {
         const photoTime = new Date(photo.timestamp || photo.created || 0);
         const now = new Date();
@@ -120,13 +120,13 @@ export const usePhotoSync = (photos = [], options = {}) => {
       });
 
       if (recentPhotos.length > 0) {
-        console.log(`🔄 Immediate sync for ${recentPhotos.length} recent photos`);
+        console.log(`🔄 Immediate sync for ${recentPhotos.length} recent local photos`);
         syncPhotos(recentPhotos);
       }
     }
   }, [autoSync, authService.isAuthenticated, getPhotosToSync, syncPhotos, syncStatus]);
 
-  // Periodic sync interval
+  // Periodic sync interval - only for fallback scenarios
   useEffect(() => {
     if (!autoSync || !authService.isAuthenticated || syncInterval <= 0) {
       return;
@@ -135,8 +135,9 @@ export const usePhotoSync = (photos = [], options = {}) => {
     const interval = setInterval(() => {
       const photosToSync = getPhotosToSync();
       
+      // Only sync if there are local_only photos that need uploading
       if (photosToSync.length > 0 && syncStatus === 'idle') {
-        console.log(`🔄 Periodic sync: ${photosToSync.length} photos pending`);
+        console.log(`🔄 Periodic sync: ${photosToSync.length} local photos pending`);
         syncPhotos();
       }
     }, syncInterval);
@@ -148,9 +149,10 @@ export const usePhotoSync = (photos = [], options = {}) => {
   useEffect(() => {
     const unsubscribe = authService.onAuthChange((token, model) => {
       if (token && model) {
-        console.log('🔄 User authenticated, checking for photos to sync');
+        console.log('🔄 User authenticated, checking for local photos to sync');
         const photosToSync = getPhotosToSync();
         if (photosToSync.length > 0) {
+          console.log(`🔄 Found ${photosToSync.length} local photos to sync after authentication`);
           // Small delay to allow components to settle
           setTimeout(() => {
             syncPhotos();
@@ -168,13 +170,14 @@ export const usePhotoSync = (photos = [], options = {}) => {
     };
   }, [getPhotosToSync, syncPhotos]);
 
-  // Network status monitoring (optional)
+  // Network status monitoring - sync local photos when back online
   useEffect(() => {
     const handleOnline = () => {
-      console.log('🔄 Back online, checking for photos to sync');
+      console.log('🔄 Back online, checking for local photos to sync');
       if (authService.isAuthenticated) {
         const photosToSync = getPhotosToSync();
         if (photosToSync.length > 0 && syncStatus === 'idle') {
+          console.log(`🔄 Found ${photosToSync.length} local photos to sync after coming online`);
           // Small delay to ensure connection is stable
           setTimeout(() => {
             syncPhotos();

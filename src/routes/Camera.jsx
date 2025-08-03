@@ -26,7 +26,7 @@ const Camera = () => {
   const [syncStatus, setSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
   const [syncMessage, setSyncMessage] = useState('');
 
-  // Load photos from localStorage on component mount
+  // Load photos from PocketBase on component mount
   useEffect(() => {
     console.log('🎬 Camera component mounted');
     console.log('🔍 Browser support check:');
@@ -35,6 +35,36 @@ const Camera = () => {
     console.log('🔍 User agent:', navigator.userAgent);
     console.log('🔍 Protocol:', window.location.protocol);
     
+    loadPhotos();
+  }, []);
+
+  // Load photos from PocketBase or fallback to localStorage
+  const loadPhotos = async () => {
+    try {
+      if (authService.isAuthenticated) {
+        console.log('📸 Loading photos from PocketBase...');
+        const result = await photoService.getUserPhotos();
+        if (result.success) {
+          setPhotos(result.photos);
+          console.log('📸 Loaded photos from PocketBase:', result.photos.length, 'photos');
+        } else {
+          console.error('📸 Error loading photos from PocketBase:', result.error);
+          // Fallback to localStorage if PocketBase fails
+          loadPhotosFromLocalStorage();
+        }
+      } else {
+        console.log('📸 User not authenticated, loading from localStorage');
+        loadPhotosFromLocalStorage();
+      }
+    } catch (error) {
+      console.error('📸 Error loading photos:', error);
+      // Fallback to localStorage on error
+      loadPhotosFromLocalStorage();
+    }
+  };
+
+  // Fallback method to load from localStorage
+  const loadPhotosFromLocalStorage = () => {
     const savedPhotos = localStorage.getItem('captured-photos');
     if (savedPhotos) {
       try {
@@ -47,11 +77,14 @@ const Camera = () => {
     } else {
       console.log('📸 No saved photos found in localStorage');
     }
-  }, []);
+  };
 
-  // Save photos to localStorage whenever photos state changes
+  // Only save to localStorage when user is not authenticated (offline fallback)
   useEffect(() => {
-    localStorage.setItem('captured-photos', JSON.stringify(photos));
+    if (!authService.isAuthenticated) {
+      localStorage.setItem('captured-photos', JSON.stringify(photos));
+      console.log('📸 Saved photos to localStorage (offline mode):', photos.length, 'photos');
+    }
   }, [photos]);
 
   // Start camera stream
@@ -289,19 +322,12 @@ const Camera = () => {
       timestamp: new Date().toISOString(),
       width: canvas.width,
       height: canvas.height,
-      syncStatus: 'local_only',
+      syncStatus: authService.isAuthenticated ? 'syncing' : 'local_only',
       hasLocal: true,
       hasRemote: false
     };
 
     console.log('📸 New photo created:', newPhoto.id, newPhoto.width + 'x' + newPhoto.height);
-
-    // Add to photos array
-    setPhotos(prev => {
-      const updated = [newPhoto, ...prev];
-      console.log('📸 Photos array updated, total count:', updated.length);
-      return updated;
-    });
 
     // Set as last captured photo for preview
     setLastCapturedPhoto(newPhoto);
@@ -317,57 +343,78 @@ const Camera = () => {
       setLastCapturedPhoto(null);
     }, 5000);
 
-    // Sync with PocketBase if user is authenticated
+    // Save directly to PocketBase if authenticated, otherwise save locally
     if (authService.isAuthenticated) {
-      syncPhotoToPocketBase(newPhoto);
-    }
-  };
-
-  // Handle uploaded files
-  const handleFilesUploaded = (uploadedFiles) => {
-    console.log('📤 Files uploaded:', uploadedFiles.length, 'files');
-    
-    // Mark uploaded files as local_only initially
-    const markedFiles = uploadedFiles.map(file => ({
-      ...file,
-      syncStatus: 'local_only',
-      hasLocal: true,
-      hasRemote: false
-    }));
-    
-    // Add uploaded files to photos array
-    setPhotos(prev => {
-      const updated = [...markedFiles, ...prev];
-      console.log('📸 Photos array updated with uploads, total count:', updated.length);
-      return updated;
-    });
-
-    // Sync with PocketBase if user is authenticated
-    if (authService.isAuthenticated) {
-      markedFiles.forEach(photo => {
-        syncPhotoToPocketBase(photo);
+      await savePhotoToPocketBase(newPhoto);
+    } else {
+      // Add to local photos array for offline mode
+      setPhotos(prev => {
+        const updated = [newPhoto, ...prev];
+        console.log('📸 Photos array updated (offline), total count:', updated.length);
+        return updated;
       });
     }
   };
 
-  // Sync individual photo to PocketBase
-  const syncPhotoToPocketBase = async (photo) => {
+  // Handle uploaded files
+  const handleFilesUploaded = async (uploadedFiles) => {
+    console.log('📤 Files uploaded:', uploadedFiles.length, 'files');
+    
+    if (authService.isAuthenticated) {
+      // Save directly to PocketBase when authenticated
+      for (const file of uploadedFiles) {
+        const photoWithStatus = {
+          ...file,
+          syncStatus: 'syncing',
+          hasLocal: true,
+          hasRemote: false
+        };
+        await savePhotoToPocketBase(photoWithStatus);
+      }
+    } else {
+      // Save locally when not authenticated
+      const markedFiles = uploadedFiles.map(file => ({
+        ...file,
+        syncStatus: 'local_only',
+        hasLocal: true,
+        hasRemote: false
+      }));
+      
+      setPhotos(prev => {
+        const updated = [...markedFiles, ...prev];
+        console.log('📸 Photos array updated with uploads (offline), total count:', updated.length);
+        return updated;
+      });
+    }
+  };
+
+  // Save photo directly to PocketBase
+  const savePhotoToPocketBase = async (photo) => {
     try {
       setSyncStatus('syncing');
-      setSyncMessage('Syncing photo to cloud...');
+      setSyncMessage('Saving photo to cloud...');
       
       const result = await photoService.uploadPhoto(photo);
       
       if (result.success) {
-        // Update the photo in the local array with sync info
-        setPhotos(prev => prev.map(p => 
-          p.id === photo.id 
-            ? { ...p, pbId: result.photo.pbId, syncStatus: 'synced', hasLocal: true, hasRemote: true }
-            : p
-        ));
+        // Add the uploaded photo to the photos array
+        const uploadedPhoto = {
+          ...photo,
+          pbId: result.photo.pbId,
+          syncStatus: 'synced',
+          hasLocal: false, // Don't store locally when saved to cloud
+          hasRemote: true,
+          remoteUrl: result.photo.remoteUrl
+        };
+        
+        setPhotos(prev => {
+          const updated = [uploadedPhoto, ...prev];
+          console.log('📸 Photo saved to PocketBase, total count:', updated.length);
+          return updated;
+        });
         
         setSyncStatus('success');
-        setSyncMessage('Photo synced successfully!');
+        setSyncMessage('Photo saved successfully!');
         
         // Clear status after 3 seconds
         setTimeout(() => {
@@ -378,9 +425,16 @@ const Camera = () => {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('Failed to sync photo:', error);
+      console.error('Failed to save photo:', error);
       setSyncStatus('error');
-      setSyncMessage(`Sync failed: ${error.message}`);
+      setSyncMessage(`Save failed: ${error.message}`);
+      
+      // Fallback to local storage on error
+      setPhotos(prev => {
+        const updated = [{ ...photo, syncStatus: 'local_only' }, ...prev];
+        console.log('📸 Photo saved locally (fallback), total count:', updated.length);
+        return updated;
+      });
       
       // Clear status after 5 seconds
       setTimeout(() => {
@@ -390,14 +444,14 @@ const Camera = () => {
     }
   };
 
-  // Sync all local photos to PocketBase
+  // Sync all local photos to PocketBase (fallback for offline photos)
   const syncAllPhotos = async () => {
     if (!authService.isAuthenticated) {
       setSyncMessage('Please sign in to sync photos');
       return;
     }
 
-    const localOnlyPhotos = photos.filter(p => p.syncStatus === 'local_only');
+    const localOnlyPhotos = photos.filter(p => p.syncStatus === 'local_only' && p.hasLocal);
     
     if (localOnlyPhotos.length === 0) {
       setSyncMessage('All photos are already synced!');
@@ -412,20 +466,8 @@ const Camera = () => {
       const result = await photoService.syncLocalPhotos(localOnlyPhotos);
       
       if (result.success) {
-        // Update local photos with sync results
-        setPhotos(prev => prev.map(localPhoto => {
-          const syncResult = result.syncResults.find(r => r.localId === localPhoto.id);
-          if (syncResult && syncResult.status === 'synced') {
-            return {
-              ...localPhoto,
-              pbId: syncResult.pbId,
-              syncStatus: 'synced',
-              hasLocal: true,
-              hasRemote: true
-            };
-          }
-          return localPhoto;
-        }));
+        // Reload photos from PocketBase to get the updated state
+        await loadPhotos();
         
         setSyncStatus('success');
         setSyncMessage(`Synced ${result.summary.successful} photos successfully!`);

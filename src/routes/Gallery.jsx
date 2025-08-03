@@ -180,11 +180,12 @@ const Gallery = () => {
     // If photo is synced to PocketBase, delete from there too
     if (photo.pbId && authService.isAuthenticated) {
       try {
-        await photoService.deletePhoto(photo.pbId);
+        const result = await photoService.deletePhoto(photo.pbId);
         console.log('🗑️ Photo deleted from PocketBase:', photo.pbId);
       } catch (error) {
         console.error('🗑️ Failed to delete from PocketBase:', error);
-        // Continue with local deletion even if remote deletion fails
+        alert(`Failed to delete photo from cloud: ${error.message}`);
+        return; // Don't proceed with local deletion if remote deletion failed
       }
     }
     
@@ -256,17 +257,24 @@ const Gallery = () => {
     const photoIds = selectedPhotos.map(p => p.id);
     console.log('🗑️ Bulk deleting photos:', photoIds);
     
+    const errors = [];
+    
     // Delete from PocketBase if photos are synced
     if (authService.isAuthenticated) {
       const syncedPhotos = selectedPhotos.filter(p => p.pbId);
       for (const photo of syncedPhotos) {
         try {
-          await photoService.deletePhoto(photo.pbId);
+          const result = await photoService.deletePhoto(photo.pbId);
           console.log('🗑️ Bulk deleted from PocketBase:', photo.pbId);
         } catch (error) {
           console.error('🗑️ Failed to bulk delete from PocketBase:', error);
+          errors.push(`${photo.id}: ${error.message}`);
         }
       }
+    }
+    
+    if (errors.length > 0) {
+      alert(`Some photos could not be deleted from cloud:\n${errors.join('\n')}`);
     }
     
     setPhotos(prev => prev.filter(photo => !photoIds.includes(photo.id)));

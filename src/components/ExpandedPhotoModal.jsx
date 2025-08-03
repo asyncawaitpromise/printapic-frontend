@@ -186,12 +186,8 @@ const ExpandedPhotoModal = ({
       label: style.name,
       icon: iconMap[style.key] || Edit3,
       action: () => {
-        // Use original sticker functionality for backward compatibility
-        if (style.key === 'sticker') {
-          onConvertToSticker(photo);
-        } else {
-          handleArtisticEffect(style.key);
-        }
+        // Use consistent API processing for all effects including sticker
+        handleArtisticEffect(style.key);
       },
       disabled: isDisabled,
       className: style.key === 'sticker' ? 'btn-primary' : 'btn-secondary',

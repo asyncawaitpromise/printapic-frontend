@@ -96,10 +96,7 @@ class PhotoService {
       return { success: true };
     } catch (error) {
       console.error('Failed to delete photo:', error);
-      return {
-        success: false,
-        error: error.message
-      };
+      throw new Error(error.message || 'Failed to delete photo from cloud');
     }
   }
 

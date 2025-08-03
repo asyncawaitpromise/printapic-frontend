@@ -17,8 +17,7 @@ const Camera = () => {
   const [error, setError] = useState('');
   const [facingMode, setFacingMode] = useState('environment'); // 'user' for front, 'environment' for back
   const [debugInfo, setDebugInfo] = useState('');
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+  const [isArtificialFullscreen, setIsArtificialFullscreen] = useState(false);
   const [lastCapturedPhoto, setLastCapturedPhoto] = useState(null);
   const [showFlash, setShowFlash] = useState(false);
   const [activeMode, setActiveMode] = useState('camera'); // 'camera' or 'upload'
@@ -446,184 +445,12 @@ const Camera = () => {
          }
    };
 
-  // Detect iOS devices
-  const isIOS = () => {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // Simple artificial fullscreen toggle
+  const toggleFullscreen = () => {
+    console.log('📱 Toggling artificial fullscreen:', !isArtificialFullscreen);
+    setIsArtificialFullscreen(!isArtificialFullscreen);
   };
 
-  // Fullscreen functionality with iOS Safari support
-  const toggleFullscreen = async () => {
-    if (!containerRef.current) return;
-
-    try {
-      if (!isFullscreen) {
-        console.log('📱 Entering fullscreen...');
-        
-        // For iOS Safari, we need to use webkitRequestFullscreen on the video element
-        // and handle it differently
-        if (isIOS() && videoRef.current) {
-          console.log('📱 iOS detected, using video element for fullscreen');
-          try {
-            if (videoRef.current.webkitRequestFullscreen) {
-              await videoRef.current.webkitRequestFullscreen();
-            } else if (videoRef.current.webkitEnterFullscreen) {
-              // For older iOS versions
-              await videoRef.current.webkitEnterFullscreen();
-            } else if (containerRef.current.webkitRequestFullscreen) {
-              // Fallback: try container element
-              await containerRef.current.webkitRequestFullscreen();
-            } else {
-              // Final fallback: pseudo-fullscreen for iOS
-              console.log('📱 iOS fullscreen API not available, using pseudo-fullscreen');
-              setIsPseudoFullscreen(true);
-              return;
-            }
-          } catch (iosError) {
-            console.log('📱 iOS fullscreen failed, trying pseudo-fullscreen:', iosError);
-            setIsPseudoFullscreen(true);
-            return;
-          }
-        } else {
-          // Standard fullscreen API for other browsers
-          if (containerRef.current.requestFullscreen) {
-            await containerRef.current.requestFullscreen();
-          } else if (containerRef.current.webkitRequestFullscreen) {
-            await containerRef.current.webkitRequestFullscreen();
-          } else if (containerRef.current.mozRequestFullScreen) {
-            await containerRef.current.mozRequestFullScreen();
-          } else if (containerRef.current.msRequestFullscreen) {
-            await containerRef.current.msRequestFullscreen();
-          } else {
-            // Fallback: pseudo-fullscreen for unsupported browsers
-            console.log('📱 No fullscreen API available, using pseudo-fullscreen');
-            setIsPseudoFullscreen(true);
-            return;
-          }
-        }
-      } else {
-        console.log('📱 Exiting fullscreen...');
-        
-        // Check if we're in pseudo-fullscreen mode
-        if (isPseudoFullscreen) {
-          setIsPseudoFullscreen(false);
-          return;
-        }
-        
-        // For iOS Safari
-        if (isIOS() && videoRef.current) {
-          if (videoRef.current.webkitExitFullscreen) {
-            await videoRef.current.webkitExitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            await document.webkitExitFullscreen();
-          }
-        } else {
-          // Standard exit fullscreen API
-          if (document.exitFullscreen) {
-            await document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            await document.webkitExitFullscreen();
-          } else if (document.mozCancelFullScreen) {
-            await document.mozCancelFullScreen();
-          } else if (document.msExitFullscreen) {
-            await document.msExitFullscreen();
-          }
-        }
-      }
-    } catch (error) {
-      console.error('📱 Fullscreen error:', error);
-      console.log('📱 Error details:', {
-        name: error.name,
-        message: error.message,
-        isIOS: isIOS(),
-        userAgent: navigator.userAgent
-      });
-    }
-  };
-
-  // Handle fullscreen change events
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      // Check for standard fullscreen elements
-      const isCurrentlyFullscreen = !!(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.msFullscreenElement
-      );
-      
-      // For iOS Safari, also check if video element is in fullscreen
-      const isVideoFullscreen = videoRef.current && (
-        videoRef.current.webkitDisplayingFullscreen ||
-        videoRef.current.webkitPresentationMode === 'fullscreen'
-      );
-      
-      const finalFullscreenState = isCurrentlyFullscreen || isVideoFullscreen;
-      console.log('📱 Fullscreen state changed:', {
-        standard: isCurrentlyFullscreen,
-        videoFullscreen: isVideoFullscreen,
-        final: finalFullscreenState,
-        isIOS: isIOS()
-      });
-      
-      // Only update if not in pseudo-fullscreen mode
-      if (!isPseudoFullscreen) {
-        setIsFullscreen(finalFullscreenState);
-      }
-    };
-
-    // Standard fullscreen events
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-    };
-  }, []);
-
-  // Handle iOS video fullscreen events separately
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      // Check for standard fullscreen elements
-      const isCurrentlyFullscreen = !!(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.msFullscreenElement
-      );
-      
-      // For iOS Safari, also check if video element is in fullscreen
-      const isVideoFullscreen = videoRef.current && (
-        videoRef.current.webkitDisplayingFullscreen ||
-        videoRef.current.webkitPresentationMode === 'fullscreen'
-      );
-      
-      const finalFullscreenState = isCurrentlyFullscreen || isVideoFullscreen;
-      // Only update if not in pseudo-fullscreen mode
-      if (!isPseudoFullscreen) {
-        setIsFullscreen(finalFullscreenState);
-      }
-    };
-
-    // Add iOS Safari video fullscreen events when video is available
-    if (videoRef.current && isIOS()) {
-      const videoElement = videoRef.current;
-      videoElement.addEventListener('webkitbeginfullscreen', handleFullscreenChange);
-      videoElement.addEventListener('webkitendfullscreen', handleFullscreenChange);
-      videoElement.addEventListener('webkitpresentationmodechanged', handleFullscreenChange);
-
-      return () => {
-        videoElement.removeEventListener('webkitbeginfullscreen', handleFullscreenChange);
-        videoElement.removeEventListener('webkitendfullscreen', handleFullscreenChange);
-        videoElement.removeEventListener('webkitpresentationmodechanged', handleFullscreenChange);
-      };
-    }
-  }, [isStreaming]); // Re-run when streaming state changes
 
   // Clean up stream on component unmount
   useEffect(() => {
@@ -681,7 +508,7 @@ const Camera = () => {
                 <div 
                   ref={containerRef}
                   className={`relative bg-black rounded-lg overflow-hidden ${
-                    isFullscreen || isPseudoFullscreen
+                    isArtificialFullscreen
                       ? 'fixed inset-0 z-50 rounded-none' 
                       : 'aspect-[4/3] sm:aspect-video max-h-[70vh] sm:max-h-none'
                   }`}
@@ -692,8 +519,6 @@ const Camera = () => {
                     autoPlay
                     playsInline
                     muted
-                    webkit-playsinline="true"
-                    x-webkit-airplay="allow"
                     className={`w-full h-full object-cover ${isStreaming ? 'block' : 'hidden'}`}
                     onLoadedData={() => console.log('🎥 Video onLoadedData fired')}
                     onLoadStart={() => console.log('🎥 Video onLoadStart fired')}
@@ -713,14 +538,14 @@ const Camera = () => {
                   )}
                   
                   {/* Camera controls overlay - moved to bottom */}
-                  {isStreaming && !isFullscreen && !isPseudoFullscreen && (
+                  {isStreaming && !isArtificialFullscreen && (
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3">
                       <button
                         className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                         onClick={toggleFullscreen}
-                        title="Enter Fullscreen"
+                        title={isArtificialFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                       >
-                        <Maximize size={20} />
+                        {isArtificialFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
                       </button>
                       <button
                         className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
@@ -751,9 +576,10 @@ const Camera = () => {
                     </div>
                   )}
 
-                  {/* Fullscreen controls */}
-                  {(isFullscreen || isPseudoFullscreen) && isStreaming && (
+                  {/* Artificial fullscreen controls */}
+                  {isArtificialFullscreen && isStreaming && (
                     <>
+                      {/* Main capture button */}
                       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
                         <button 
                           className="btn btn-circle btn-lg bg-white/20 text-white border-white/30 hover:bg-white/30"
@@ -763,14 +589,25 @@ const Camera = () => {
                         </button>
                       </div>
                       
-                      {/* Exit fullscreen button */}
-                      <div className="absolute top-4 right-4">
+                      {/* Top controls */}
+                      <div className="absolute top-4 right-4 flex gap-2">
                         <button
                           className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
                           onClick={toggleFullscreen}
                           title="Exit Fullscreen"
                         >
                           <Minimize size={20} />
+                        </button>
+                      </div>
+                      
+                      {/* Side controls */}
+                      <div className="absolute bottom-8 left-4">
+                        <button
+                          className="btn btn-circle btn-sm bg-black/50 text-white border-white/30 hover:bg-black/70"
+                          onClick={switchCamera}
+                          title="Switch Camera"
+                        >
+                          <RotateCcw size={20} />
                         </button>
                       </div>
                     </>

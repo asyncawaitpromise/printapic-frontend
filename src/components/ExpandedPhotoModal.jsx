@@ -55,56 +55,56 @@ const ExpandedPhotoModal = ({
     }
   };
 
-  // Create artistic editing options based on prompt styles and workflows
-  const getArtisticOptions = () => {
-    const options = [];
-    
-    // Add prompt key-based artistic effects
-    PROMPT_STYLES.forEach(style => {
+  // Create artistic editing options - mix of original functionality and new workflows
+  const editingOptions = [
+    // Original sticker functionality (keep working as before)
+    {
+      id: 'sticker',
+      label: 'Sticker-ify',
+      icon: Layers,
+      action: () => onConvertToSticker(photo),
+      disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
+      className: 'btn-primary',
+      tooltip: photo.pbId || photo.hasRemote ? 'Convert to sticker with transparent background' : 'Photo must be synced to cloud first'
+    },
+    // New AI artistic effects (only if workflows are loaded)
+    ...(workflows.length > 0 ? PROMPT_STYLES.filter(style => style.key !== 'sticker').map(style => {
       const iconMap = {
-        'sticker': Layers,
         'line-art': PenTool,
         'van-gogh': Aperture,
         'manga-style': Camera,
         'oil-painting': Star
       };
       
-      options.push({
+      return {
         id: style.key,
         label: style.name,
         icon: iconMap[style.key] || Edit3,
         action: () => handleArtisticEffect(style.key),
         disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-        className: 'btn-primary',
+        className: 'btn-secondary',
         tooltip: style.description
-      });
-    });
-
-    // Add other workflow-based effects
-    workflows.forEach(workflow => {
-      if (workflow.id !== 'ai_style_transfer') {
-        const iconMap = {
-          'remove_background': Layers,
-          'enhance_colors': Star,
-          'vintage_filter': Camera
-        };
-        
-        options.push({
-          id: workflow.id,
-          label: workflow.name,
-          icon: iconMap[workflow.id] || Edit3,
-          action: () => handleWorkflowEffect(workflow.id),
-          disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-          className: 'btn-secondary',
-          tooltip: workflow.description
-        });
-      }
-    });
-
-    return options;
-  };
-
-  const editingOptions = getArtisticOptions();
+      };
+    }) : []),
+    // Other workflow-based effects (only if workflows are loaded)
+    ...(workflows.length > 0 ? workflows.filter(w => w.id !== 'ai_style_transfer').map(workflow => {
+      const iconMap = {
+        'remove_background': Layers,
+        'enhance_colors': Star,
+        'vintage_filter': Camera
+      };
+      
+      return {
+        id: workflow.id,
+        label: workflow.name,
+        icon: iconMap[workflow.id] || Edit3,
+        action: () => handleWorkflowEffect(workflow.id),
+        disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
+        className: 'btn-accent',
+        tooltip: workflow.description
+      };
+    }) : [])
+  ];
 
   return (
     <div className="modal modal-open">

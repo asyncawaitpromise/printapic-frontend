@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Trash2, Check, AlertCircle, Settings, Edit3, Star, Camera, Layers, Aperture, PenTool } from 'react-feather';
 import StickerProcessingStatus from './StickerProcessingStatus';
+import { usePhotoProcessing } from '../hooks/usePhotoProcessing';
+import { PROMPT_STYLES } from '../data/workflowData';
 
 const ExpandedPhotoModal = ({
   photo,
@@ -22,67 +24,87 @@ const ExpandedPhotoModal = ({
 }) => {
   const [showEditingOptions, setShowEditingOptions] = useState(true);
   
+  const {
+    workflows,
+    startProcessing,
+    error: processingError
+  } = usePhotoProcessing();
+  
   if (!isOpen || !photo) return null;
 
   const photoIndex = photos.findIndex(p => p.id === photo.id);
 
-  // Artistic editing options - easily extensible
-  const editingOptions = [
-    {
-      id: 'sticker',
-      label: 'Sticker-ify',
-      icon: Layers,
-      action: () => onConvertToSticker(photo),
-      disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-      className: 'btn-primary',
-      tooltip: photo.pbId || photo.hasRemote ? 'Convert to sticker with transparent background' : 'Photo must be synced to cloud first'
-    },
-    {
-      id: 'oil-paint',
-      label: 'Oil Paint-ify',
-      icon: Aperture,
-      action: () => console.log('Oil paint effect:', photo.id),
-      disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-      className: 'btn-secondary',
-      tooltip: 'Transform into oil painting style'
-    },
-    {
-      id: 'line-art',
-      label: 'Line Art-ify',
-      icon: PenTool,
-      action: () => console.log('Line art effect:', photo.id),
-      disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-      className: 'btn-accent',
-      tooltip: 'Convert to clean line art drawing'
-    },
-    {
-      id: 'enhance',
-      label: 'Enhance',
-      icon: Star,
-      action: () => console.log('Enhance photo:', photo.id),
-      disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-      className: 'btn-info',
-      tooltip: 'AI-enhance photo quality and clarity'
-    },
-    {
-      id: 'filter',
-      label: 'Apply Filter',
-      icon: Camera,
-      action: () => console.log('Apply filter:', photo.id),
-      disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-      className: 'btn-warning',
-      tooltip: 'Apply artistic color filters'
-    },
-    {
-      id: 'adjust',
-      label: 'Adjust Colors',
-      icon: Edit3,
-      action: () => console.log('Adjust colors:', photo.id),
-      disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
-      className: 'btn-neutral',
-      tooltip: 'Adjust brightness, contrast, saturation'
+  // Helper function to start AI processing with prompt key
+  const handleArtisticEffect = async (promptKey) => {
+    try {
+      const aiStyleWorkflow = workflows.find(w => w.id === 'ai_style_transfer');
+      if (aiStyleWorkflow) {
+        await startProcessing(photo.id, 'ai_style_transfer', { promptKey });
+      }
+    } catch (err) {
+      console.error('Failed to start artistic effect:', err);
     }
-  ];
+  };
+
+  // Helper function to start other workflows
+  const handleWorkflowEffect = async (workflowId) => {
+    try {
+      await startProcessing(photo.id, workflowId);
+    } catch (err) {
+      console.error('Failed to start workflow:', err);
+    }
+  };
+
+  // Create artistic editing options based on prompt styles and workflows
+  const getArtisticOptions = () => {
+    const options = [];
+    
+    // Add prompt key-based artistic effects
+    PROMPT_STYLES.forEach(style => {
+      const iconMap = {
+        'sticker': Layers,
+        'line-art': PenTool,
+        'van-gogh': Aperture,
+        'manga-style': Camera,
+        'oil-painting': Star
+      };
+      
+      options.push({
+        id: style.key,
+        label: style.name,
+        icon: iconMap[style.key] || Edit3,
+        action: () => handleArtisticEffect(style.key),
+        disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
+        className: 'btn-primary',
+        tooltip: style.description
+      });
+    });
+
+    // Add other workflow-based effects
+    workflows.forEach(workflow => {
+      if (workflow.id !== 'ai_style_transfer') {
+        const iconMap = {
+          'remove_background': Layers,
+          'enhance_colors': Star,
+          'vintage_filter': Camera
+        };
+        
+        options.push({
+          id: workflow.id,
+          label: workflow.name,
+          icon: iconMap[workflow.id] || Edit3,
+          action: () => handleWorkflowEffect(workflow.id),
+          disabled: isProcessing || (!photo.pbId && !photo.hasRemote),
+          className: 'btn-secondary',
+          tooltip: workflow.description
+        });
+      }
+    });
+
+    return options;
+  };
+
+  const editingOptions = getArtisticOptions();
 
   return (
     <div className="modal modal-open">
@@ -154,24 +176,33 @@ const ExpandedPhotoModal = ({
           </div>
           
           {showEditingOptions && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {editingOptions.map((option) => {
-                const IconComponent = option.icon;
-                return (
-                  <button
-                    key={option.id}
-                    className={`btn btn-sm gap-1 ${option.className} ${option.disabled ? 'btn-disabled' : ''} flex-col h-auto py-3`}
-                    onClick={option.action}
-                    disabled={option.disabled}
-                    title={option.tooltip}
-                  >
-                    <IconComponent size={18} />
-                    <span className="text-xs leading-tight text-center">
-                      {option.label.replace('-ify', '')}
-                    </span>
-                  </button>
-                );
-              })}
+            <div>
+              {processingError && (
+                <div className="alert alert-error mb-3">
+                  <AlertCircle size={16} />
+                  <span className="text-sm">{processingError}</span>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {editingOptions.map((option) => {
+                  const IconComponent = option.icon;
+                  return (
+                    <button
+                      key={option.id}
+                      className={`btn btn-sm gap-1 ${option.className} ${option.disabled ? 'btn-disabled' : ''} flex-col h-auto py-3`}
+                      onClick={option.action}
+                      disabled={option.disabled}
+                      title={option.tooltip}
+                    >
+                      <IconComponent size={16} />
+                      <span className="text-xs leading-tight text-center">
+                        {option.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
           

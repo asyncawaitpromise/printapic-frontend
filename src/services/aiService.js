@@ -1,12 +1,12 @@
-import { mockHttpClient, simulateDelay, shouldSimulateError } from '../config/mockApi';
-import { MOCK_WORKFLOWS, MOCK_PROCESSING_STATUSES, MOCK_RESULT_IMAGES } from '../mocks/workflowMocks';
+import { httpClient, simulateDelay, shouldSimulateError } from '../config/devApi';
+import { WORKFLOWS, PROCESSING_STATUSES, RESULT_IMAGES } from '../data/workflowData';
 
 /**
- * AI Service for photo processing with mock implementation
+ * AI Service for photo processing with simulation for development
  */
 class AIService {
   constructor() {
-    this.httpClient = mockHttpClient;
+    this.httpClient = httpClient;
     this.activeJobs = new Map(); // Track active processing jobs
   }
 
@@ -24,10 +24,10 @@ class AIService {
         throw new Error('Failed to fetch workflows');
       }
 
-      console.log('🤖 Workflows fetched successfully:', MOCK_WORKFLOWS.length);
+      console.log('🤖 Workflows fetched successfully:', WORKFLOWS.length);
       return {
         success: true,
-        data: MOCK_WORKFLOWS
+        data: WORKFLOWS
       };
     } catch (error) {
       console.error('🤖 Error fetching workflows:', error);
@@ -56,7 +56,7 @@ class AIService {
 
       const photoId = 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       
-      // Store photo data locally for mock processing
+      // Store photo data locally for processing
       const photoInfo = {
         id: photoId,
         data: photoData,
@@ -71,7 +71,7 @@ class AIService {
         data: {
           photoId,
           status: 'uploaded',
-          uploadUrl: `https://mock-storage.com/${photoId}.jpg`
+          uploadUrl: `https://dev-storage.com/${photoId}.jpg`
         }
       };
     } catch (error) {
@@ -88,6 +88,7 @@ class AIService {
    * @param {string} photoId - Photo ID from upload
    * @param {string} workflowId - AI workflow ID
    * @param {Object} options - Processing options
+   * @param {string} options.promptKey - Optional prompt key ("sticker", "line-art", "van-gogh", "manga-style", "oil-painting")
    * @returns {Promise<Object>} - Processing job response
    */
   async processPhoto(photoId, workflowId, options = {}) {
@@ -100,9 +101,16 @@ class AIService {
         throw new Error('AI processing failed to start');
       }
 
-      const workflow = MOCK_WORKFLOWS.find(w => w.id === workflowId);
+      const workflow = WORKFLOWS.find(w => w.id === workflowId);
       if (!workflow) {
         throw new Error(`Workflow ${workflowId} not found`);
+      }
+
+      // Set default promptKey to "sticker" if not provided
+      const promptKey = options.promptKey || 'sticker';
+      const validPromptKeys = ['sticker', 'line-art', 'van-gogh', 'manga-style', 'oil-painting'];
+      if (!validPromptKeys.includes(promptKey)) {
+        throw new Error(`Invalid promptKey: ${promptKey}. Valid options are: ${validPromptKeys.join(', ')}`);
       }
 
       const jobId = 'job_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -113,7 +121,10 @@ class AIService {
         photoId,
         workflowId,
         workflow,
-        options,
+        options: {
+          ...options,
+          promptKey
+        },
         status: 'queued',
         progress: 0,
         startedAt: new Date().toISOString(),
@@ -124,8 +135,8 @@ class AIService {
       // Store active job
       this.activeJobs.set(jobId, job);
 
-      // Start mock processing
-      this.startMockProcessing(jobId);
+      // Start processing simulation
+      this.startProcessingSimulation(jobId);
 
       console.log('🎯 AI processing job created:', jobId);
       
@@ -212,8 +223,13 @@ class AIService {
         throw new Error('Processing not completed yet');
       }
 
-      // Get mock result image
-      const resultImage = MOCK_RESULT_IMAGES[job.workflowId] || MOCK_RESULT_IMAGES.enhance_colors;
+      // Get result image based on workflow and promptKey
+      let resultImage;
+      if (job.workflowId === 'ai_style_transfer' && job.options?.promptKey) {
+        resultImage = RESULT_IMAGES.ai_style_transfer[job.options.promptKey] || RESULT_IMAGES.ai_style_transfer.sticker;
+      } else {
+        resultImage = RESULT_IMAGES[job.workflowId] || RESULT_IMAGES.enhance_colors;
+      }
       
       console.log('💾 Result downloaded successfully:', jobId);
       
@@ -283,10 +299,10 @@ class AIService {
   }
 
   /**
-   * Start mock processing simulation
+   * Start processing simulation
    * @param {string} jobId - Job ID to process
    */
-  startMockProcessing(jobId) {
+  startProcessingSimulation(jobId) {
     const job = this.activeJobs.get(jobId);
     if (!job) return;
 
@@ -322,7 +338,7 @@ class AIService {
       job.estimatedTimeRemaining = 0;
       job.completedAt = new Date().toISOString();
       
-      console.log('✅ Mock processing completed:', jobId);
+      console.log('✅ Processing completed:', jobId);
     }, job.estimatedTime);
   }
 

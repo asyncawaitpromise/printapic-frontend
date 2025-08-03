@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Zap, ArrowLeft, Clock, Download, Eye, AlertCircle } from 'react-feather';
 import { usePhotoProcessing } from '../hooks/usePhotoProcessing';
+import { PROMPT_STYLES } from '../data/workflowData';
 
 const MobileStickerCustomizer = ({ 
   photo, 
@@ -10,6 +11,7 @@ const MobileStickerCustomizer = ({
   className = '' 
 }) => {
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
+  const [selectedPromptKey, setSelectedPromptKey] = useState('sticker');
   const [currentStep, setCurrentStep] = useState('select');
   const [activeJobId, setActiveJobId] = useState(null);
   const [processingResult, setProcessingResult] = useState(null);
@@ -40,10 +42,20 @@ const MobileStickerCustomizer = ({
     }
   }, [processingJobs, activeJobId, getJob, setError]);
 
-  const handleWorkflowSelect = async (workflow) => {
+  const handleWorkflowSelect = (workflow) => {
+    setSelectedWorkflow(workflow);
+    
+    // If workflow supports prompt styles, go to style selection, otherwise start processing
+    if (workflow.supportsPromptStyles) {
+      setCurrentStep('style-select');
+    } else {
+      startProcessingWorkflow(workflow);
+    }
+  };
+
+  const startProcessingWorkflow = async (workflow, promptKey = null) => {
     if (!photo) return;
     
-    setSelectedWorkflow(workflow);
     setCurrentStep('processing');
     setError(null);
 
@@ -52,13 +64,19 @@ const MobileStickerCustomizer = ({
         navigator.vibrate([10, 50, 10]);
       }
 
-      const jobId = await startProcessing(photo.id, workflow.id);
+      const options = workflow.supportsPromptStyles && promptKey ? { promptKey } : {};
+      const jobId = await startProcessing(photo.id, workflow.id, options);
       setActiveJobId(jobId);
       
     } catch (err) {
       setCurrentStep('select');
       setSelectedWorkflow(null);
     }
+  };
+
+  const handlePromptStyleSelect = (promptKey) => {
+    setSelectedPromptKey(promptKey);
+    startProcessingWorkflow(selectedWorkflow, promptKey);
   };
 
   const handleSaveResult = () => {
@@ -110,6 +128,7 @@ const MobileStickerCustomizer = ({
             <div>
               <h3 className="text-lg font-semibold">
                 {currentStep === 'select' && 'Choose AI Style'}
+                {currentStep === 'style-select' && 'Select Art Style'}
                 {currentStep === 'processing' && 'Processing...'}
                 {currentStep === 'result' && 'Your Enhanced Photo'}
               </h3>
@@ -193,6 +212,38 @@ const MobileStickerCustomizer = ({
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {currentStep === 'style-select' && selectedWorkflow && (
+            <div>
+              <h4 className="text-md font-semibold mb-2">{selectedWorkflow.name}</h4>
+              <p className="text-sm text-base-content/70 mb-4">Choose your artistic style:</p>
+              
+              <div className="grid grid-cols-1 gap-3">
+                {PROMPT_STYLES.map((style) => (
+                  <button
+                    key={style.key}
+                    onClick={() => handlePromptStyleSelect(style.key)}
+                    className="btn btn-outline btn-lg h-auto p-4 justify-start text-left"
+                    style={{ borderColor: style.color }}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <div 
+                        className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
+                        style={{ backgroundColor: style.color + '20', color: style.color }}
+                      >
+                        {style.icon}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold">{style.name}</div>
+                        <div className="text-sm opacity-70">{style.description}</div>
+                      </div>
+                      <Zap size={20} />
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

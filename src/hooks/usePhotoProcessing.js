@@ -55,14 +55,14 @@ export const usePhotoProcessing = (options = {}) => {
    * Start processing a photo with a workflow
    * @param {string} photoId - Photo ID
    * @param {string} workflowId - Workflow ID
-   * @param {Object} processingOptions - Additional options
+   * @param {Object} processingOptions - Additional options including promptKey
    * @returns {Promise<string>} - Job ID
    */
   const startProcessing = useCallback(async (photoId, workflowId, processingOptions = {}) => {
     setError(null);
     
     try {
-      console.log('🚀 Starting photo processing:', { photoId, workflowId });
+      console.log('🚀 Starting photo processing:', { photoId, workflowId, processingOptions });
       
       const response = await aiService.processPhoto(photoId, workflowId, processingOptions);
       

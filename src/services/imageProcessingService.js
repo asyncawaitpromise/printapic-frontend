@@ -246,7 +246,7 @@ class ImageProcessingService {
       }
 
       const user = await pb.collection('printapic_users').getOne(pb.authStore.model.id);
-      return user.token_balance || 0;
+      return user.tokens || 0; // Field is 'tokens' not 'token_balance'
       
     } catch (error) {
       console.error('❌ Failed to get user token balance:', error);

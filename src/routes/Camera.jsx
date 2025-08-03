@@ -267,7 +267,16 @@ const Camera = () => {
     console.log('📸 Canvas dimensions set to:', canvas.width, 'x', canvas.height);
 
     // Draw the video frame to canvas
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (facingMode === 'user') {
+      // For front camera, flip the image horizontally to correct the mirror effect
+      context.save();
+      context.scale(-1, 1);
+      context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+      context.restore();
+    } else {
+      // For back camera, draw normally
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
 
     // Convert canvas to base64 image
     const imageData = canvas.toDataURL('image/jpeg', 0.8);
@@ -525,7 +534,7 @@ const Camera = () => {
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
           />
           
           {/* Artificial fullscreen controls */}
@@ -644,7 +653,7 @@ const Camera = () => {
                     autoPlay
                     playsInline
                     muted
-                    className={`w-full h-full object-cover ${isStreaming && !isArtificialFullscreen ? 'block' : 'hidden'}`}
+                    className={`w-full h-full object-cover ${isStreaming && !isArtificialFullscreen ? 'block' : 'hidden'} ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
                     onLoadedData={() => console.log('🎥 Video onLoadedData fired')}
                     onLoadStart={() => console.log('🎥 Video onLoadStart fired')}
                     onCanPlay={() => console.log('🎥 Video onCanPlay fired')}

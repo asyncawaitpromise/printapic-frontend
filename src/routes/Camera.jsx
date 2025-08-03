@@ -97,46 +97,56 @@ const Camera = () => {
       }
       console.log('🎥 Video tracks:', stream.getVideoTracks());
       
+      // Set stream to video elements
+      console.log('🎥 Setting stream to video elements');
+      streamRef.current = stream;
+      
+      // Apply stream to both video elements if they exist
       if (videoRef.current) {
-        console.log('🎥 Setting stream to video elements');
+        console.log('🎥 Setting stream to regular video element');
         videoRef.current.srcObject = stream;
-        if (fullscreenVideoRef.current) {
-          fullscreenVideoRef.current.srcObject = stream;
-        }
-        streamRef.current = stream;
+      }
+      if (fullscreenVideoRef.current) {
+        console.log('🎥 Setting stream to fullscreen video element');
+        fullscreenVideoRef.current.srcObject = stream;
+      }
+      
+      // Add event listeners and play both video elements
+      const playVideo = async (videoElement, name) => {
+        if (!videoElement) return;
         
-        // Add event listeners to video element for debugging
-        videoRef.current.onloadedmetadata = () => {
-          console.log('🎥 Video metadata loaded');
-          console.log('🎥 Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+        videoElement.onloadedmetadata = () => {
+          console.log(`🎥 ${name} video metadata loaded`);
+          console.log(`🎥 ${name} video dimensions:`, videoElement.videoWidth, 'x', videoElement.videoHeight);
         };
         
-        videoRef.current.oncanplay = () => {
-          console.log('🎥 Video can start playing');
+        videoElement.oncanplay = () => {
+          console.log(`🎥 ${name} video can start playing`);
         };
         
-        videoRef.current.onplay = () => {
-          console.log('🎥 Video started playing');
+        videoElement.onplay = () => {
+          console.log(`🎥 ${name} video started playing`);
         };
         
-        videoRef.current.onerror = (e) => {
-          console.error('🎥 Video element error:', e);
+        videoElement.onerror = (e) => {
+          console.error(`🎥 ${name} video element error:`, e);
         };
         
         // Try to play the video
         try {
-          await videoRef.current.play();
-          console.log('🎥 Video play() succeeded');
+          await videoElement.play();
+          console.log(`🎥 ${name} video play() succeeded`);
         } catch (playError) {
-          console.log('🎥 Video play() failed, but this might be OK:', playError);
+          console.log(`🎥 ${name} video play() failed, but this might be OK:`, playError);
         }
+      };
+      
+      // Setup both video elements
+      await playVideo(videoRef.current, 'Regular');
+      await playVideo(fullscreenVideoRef.current, 'Fullscreen');
         
-        setIsStreaming(true);
-        console.log('🎥 Camera started successfully');
-      } else {
-        console.error('🎥 Video ref is null');
-        throw new Error('Video element not found');
-      }
+      setIsStreaming(true);
+      console.log('🎥 Camera started successfully');
     } catch (err) {
       console.error('🎥 Error accessing camera:', err);
       console.error('🎥 Error name:', err.name);
@@ -197,17 +207,35 @@ const Camera = () => {
   };
 
   // Switch between front and back camera
-  const switchCamera = () => {
+  const switchCamera = async () => {
     console.log('🔄 Switching camera from', facingMode, 'to', facingMode === 'user' ? 'environment' : 'user');
-    stopCamera();
-    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    
+    try {
+      // Stop current camera
+      stopCamera();
+      
+      // Clear any existing errors
+      setError('');
+      
+      // Wait a moment for cleanup
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Switch facing mode (this will trigger the useEffect to restart camera)
+      setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    } catch (error) {
+      console.error('🔄 Error switching camera:', error);
+      setError('Failed to switch camera. Please try again.');
+    }
   };
 
   // Restart camera with new facing mode
   useEffect(() => {
     if (isStreaming) {
       console.log('🔄 Restarting camera with new facing mode:', facingMode);
-      startCamera();
+      // Add a small delay to ensure cleanup is complete
+      setTimeout(() => {
+        startCamera();
+      }, 100);
     }
   }, [facingMode]);
 
@@ -462,17 +490,22 @@ const Camera = () => {
   };
 
 
-  // Sync video streams when switching between modes
+  // Sync video streams when switching between modes or when video elements change
   useEffect(() => {
-    if (streamRef.current) {
-      if (videoRef.current && !isArtificialFullscreen) {
+    if (streamRef.current && isStreaming) {
+      console.log('🔄 Syncing video streams, isArtificialFullscreen:', isArtificialFullscreen);
+      
+      if (videoRef.current) {
+        console.log('🔄 Setting stream to regular video element');
         videoRef.current.srcObject = streamRef.current;
       }
-      if (fullscreenVideoRef.current && isArtificialFullscreen) {
+      
+      if (fullscreenVideoRef.current) {
+        console.log('🔄 Setting stream to fullscreen video element');
         fullscreenVideoRef.current.srcObject = streamRef.current;
       }
     }
-  }, [isArtificialFullscreen]);
+  }, [isArtificialFullscreen, isStreaming]);
 
   // Clean up stream on component unmount
   useEffect(() => {

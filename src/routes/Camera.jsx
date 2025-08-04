@@ -293,22 +293,73 @@ const Camera = () => {
     console.log('📸 Video dimensions:', video.videoWidth, 'x', video.videoHeight);
     console.log('📸 Video ready state:', video.readyState);
 
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    let captureWidth, captureHeight, sourceX, sourceY, drawWidth, drawHeight;
+
+    if (isArtificialFullscreen) {
+      // In fullscreen mode, capture the entire video
+      captureWidth = video.videoWidth;
+      captureHeight = video.videoHeight;
+      sourceX = 0;
+      sourceY = 0;
+      drawWidth = captureWidth;
+      drawHeight = captureHeight;
+      
+      console.log('📸 Fullscreen capture - using full video dimensions');
+    } else {
+      // In collapsed preview mode, capture only the visible portion
+      // Get the actual displayed size of the video element
+      const videoElement = video;
+      const videoRect = videoElement.getBoundingClientRect();
+      const containerElement = containerRef.current;
+      const containerRect = containerElement.getBoundingClientRect();
+      
+      // Calculate the aspect ratios
+      const videoAspectRatio = video.videoWidth / video.videoHeight;
+      const containerAspectRatio = containerRect.width / containerRect.height;
+      
+      console.log('📸 Video aspect ratio:', videoAspectRatio);
+      console.log('📸 Container aspect ratio:', containerAspectRatio);
+      console.log('📸 Container dimensions:', containerRect.width, 'x', containerRect.height);
+      
+      if (videoAspectRatio > containerAspectRatio) {
+        // Video is wider than container - crop sides
+        const scaleFactor = video.videoHeight / containerRect.height;
+        captureWidth = containerRect.width * scaleFactor;
+        captureHeight = video.videoHeight;
+        sourceX = (video.videoWidth - captureWidth) / 2;
+        sourceY = 0;
+      } else {
+        // Video is taller than container - crop top/bottom
+        const scaleFactor = video.videoWidth / containerRect.width;
+        captureWidth = video.videoWidth;
+        captureHeight = containerRect.height * scaleFactor;
+        sourceX = 0;
+        sourceY = (video.videoHeight - captureHeight) / 2;
+      }
+      
+      drawWidth = captureWidth;
+      drawHeight = captureHeight;
+      
+      console.log('📸 Collapsed preview capture - cropping to visible area');
+      console.log('📸 Source crop:', sourceX, sourceY, captureWidth, captureHeight);
+    }
+
+    // Set canvas dimensions to match capture area
+    canvas.width = drawWidth;
+    canvas.height = drawHeight;
 
     console.log('📸 Canvas dimensions set to:', canvas.width, 'x', canvas.height);
 
-    // Draw the video frame to canvas
+    // Draw the video frame to canvas (cropped if in collapsed mode)
     if (facingMode === 'user') {
       // For front camera, flip the image horizontally to correct the mirror effect
       context.save();
       context.scale(-1, 1);
-      context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+      context.drawImage(video, sourceX, sourceY, captureWidth, captureHeight, -drawWidth, 0, drawWidth, drawHeight);
       context.restore();
     } else {
       // For back camera, draw normally
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      context.drawImage(video, sourceX, sourceY, captureWidth, captureHeight, 0, 0, drawWidth, drawHeight);
     }
 
     // Convert canvas to base64 image

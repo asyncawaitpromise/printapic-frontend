@@ -14,15 +14,34 @@ const ScrollToTop = () => {
     // Save gallery scroll position when leaving gallery
     if (prevPath === '/gallery' && pathname !== '/gallery') {
       galleryScrollPosition = window.scrollY;
+      console.log('📍 Saved Gallery scroll position:', galleryScrollPosition);
     }
 
     // Handle scroll behavior based on the new route
     if (pathname === '/gallery') {
       // Restore previous scroll position for gallery
-      // Use setTimeout to ensure DOM has rendered
-      setTimeout(() => {
-        window.scrollTo(0, galleryScrollPosition);
-      }, 100);
+      // Wait for content to render with progressive delays
+      const restoreScrollPosition = () => {
+        const targetPosition = galleryScrollPosition;
+        console.log('📍 Attempting to restore Gallery scroll to:', targetPosition);
+        
+        if (targetPosition > 0) {
+          // Check if page has enough height to scroll to target position
+          const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+          
+          if (maxScroll >= targetPosition) {
+            window.scrollTo(0, targetPosition);
+            console.log('📍 Successfully restored scroll position to:', targetPosition);
+          } else {
+            // Page hasn't fully rendered yet, try again
+            console.log('📍 Page height insufficient, retrying scroll restoration...');
+            setTimeout(restoreScrollPosition, 100);
+          }
+        }
+      };
+
+      // Start restoration with multiple attempts
+      setTimeout(restoreScrollPosition, 200); // Initial delay for React render
     } else {
       // Scroll to top for all other routes (PhotoView, etc.)
       window.scrollTo(0, 0);

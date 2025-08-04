@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ProtectedRoute, PublicOnlyRoute, OptionalRoute } from './components/AuthWrapper.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
 import Reference from "./routes/Reference.jsx";
 import Homepage from "./routes/Homepage.jsx";
 import Camera from "./routes/Camera.jsx";
@@ -16,6 +17,7 @@ const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<OptionalRoute><Homepage /></OptionalRoute>} />
           <Route path="/camera" element={<ProtectedRoute><Camera /></ProtectedRoute>} />

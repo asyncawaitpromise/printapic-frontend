@@ -192,7 +192,7 @@ class PhotoService {
     const imageField = fieldName === 'result_image' ? record.result_image : record.image;
     if (!imageField) return null;
     
-    return this.pb.files.getUrl(record, imageField, { thumb });
+    return this.pb.files.getURL(record, imageField, { thumb });
   }
 
   // Sync local photos with PocketBase

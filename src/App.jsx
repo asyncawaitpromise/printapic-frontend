@@ -5,6 +5,7 @@ import Reference from "./routes/Reference.jsx";
 import Homepage from "./routes/Homepage.jsx";
 import Camera from "./routes/Camera.jsx";
 import Gallery from "./routes/Gallery.jsx";
+import PhotoView from "./routes/PhotoView.jsx";
 import SignIn from "./routes/SignIn.jsx";
 import SignUp from "./routes/SignUp.jsx";
 import Settings from "./routes/Settings.jsx";
@@ -19,6 +20,7 @@ const App = () => {
           <Route path="/" element={<OptionalRoute><Homepage /></OptionalRoute>} />
           <Route path="/camera" element={<ProtectedRoute><Camera /></ProtectedRoute>} />
           <Route path="/gallery" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
+          <Route path="/photo/:photoId" element={<ProtectedRoute><PhotoView /></ProtectedRoute>} />
           <Route path="/signin" element={<PublicOnlyRoute><SignIn /></PublicOnlyRoute>} />
           <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

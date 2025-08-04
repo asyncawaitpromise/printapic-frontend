@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Image, Camera as CameraIcon, CheckSquare, Square, Cloud, RefreshCw, AlertCircle } from 'react-feather';
 import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
-import ExpandedPhotoModal from '../components/ExpandedPhotoModal';
 import PhotoStats from '../components/PhotoStats';
 import { useMobilePhotoSelection } from '../hooks/useMobilePhotoSelection';
 import { usePhotoSync } from '../hooks/usePhotoSync';
@@ -16,7 +15,6 @@ import { authService } from '../services/authService';
 const Gallery = () => {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState([]);
-  const [expandedPhoto, setExpandedPhoto] = useState(null);
   const [stickerCustomizerOpen, setStickerCustomizerOpen] = useState(false);
   const [selectedPhotoForSticker, setSelectedPhotoForSticker] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -200,10 +198,6 @@ const Gallery = () => {
     }
     
     setPhotos(prev => prev.filter(photo => photo.id !== photoId));
-    // Close expanded view if deleting the expanded photo
-    if (expandedPhoto && expandedPhoto.id === photoId) {
-      setExpandedPhoto(null);
-    }
   };
 
   // Convert to sticker
@@ -248,13 +242,12 @@ const Gallery = () => {
     if (window.confirm(`Are you sure you want to delete all ${photos.length} photos? This action cannot be undone.`)) {
       console.log('🗑️ Clearing all photos');
       setPhotos([]);
-      setExpandedPhoto(null);
     }
   };
 
-  // Expand photo
+  // Navigate to photo view
   const expandPhoto = (photo) => {
-    setExpandedPhoto(photo);
+    navigate(`/photo/${photo.id}`);
   };
 
   // Handle new photo created from artistic effects
@@ -264,10 +257,6 @@ const Gallery = () => {
     await loadPhotos();
   }, [loadPhotos]);
 
-  // Close expanded photo
-  const closeExpandedPhoto = () => {
-    setExpandedPhoto(null);
-  };
 
   // Bulk action handlers
   const handleDeleteSelected = async (selectedPhotos) => {
@@ -627,26 +616,6 @@ const Gallery = () => {
         </div>
       </div>
       
-      {/* Expanded Photo Modal */}
-      <ExpandedPhotoModal
-        photo={expandedPhoto}
-        photos={photos}
-        isOpen={!!expandedPhoto}
-        onClose={closeExpandedPhoto}
-        onDelete={deletePhoto}
-        onConvertToSticker={convertToSticker}
-        onNewPhotoCreated={handleNewPhotoCreated}
-        stickerProcessing={{
-          isProcessing: isStickerProcessing,
-          isComplete: isStickerComplete,
-          hasError: hasStickerError,
-          error: stickerError,
-          progress: stickerProgress,
-          message: stickerMessage,
-          resultUrl: stickerResultUrl,
-          onReset: resetSticker
-        }}
-      />
       
       {/* Mobile Bulk Actions */}
       {isSelectionMode && (

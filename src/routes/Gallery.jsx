@@ -171,6 +171,28 @@ const Gallery = () => {
     await loadPhotos(true); // Use background refresh mode
   }, [loadPhotos]);
 
+  // Scroll to target photo if we have a reference
+  useEffect(() => {
+    if (photos.length > 0) {
+      const targetPhotoId = localStorage.getItem('gallery-scroll-target');
+      if (targetPhotoId) {
+        // Find the target photo element and scroll to it
+        const targetElement = document.querySelector(`[data-photo-id="${targetPhotoId}"]`);
+        if (targetElement) {
+          setTimeout(() => {
+            targetElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            console.log('📍 Scrolled to target photo:', targetPhotoId);
+          }, 100);
+        }
+        // Clear the reference after scrolling
+        localStorage.removeItem('gallery-scroll-target');
+      }
+    }
+  }, [photos]);
+
   // Load photos on component mount and when auth state changes
   useEffect(() => {
     console.log('🖼️ Gallery component mounted');
@@ -284,6 +306,8 @@ const Gallery = () => {
 
   // Navigate to photo view
   const expandPhoto = (photo) => {
+    // Store reference to the photo we're navigating to for scroll restoration
+    localStorage.setItem('gallery-scroll-target', photo.id);
     navigate(`/photo/${photo.id}`);
   };
 
@@ -593,17 +617,18 @@ const Gallery = () => {
               {/* Photo grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {photos.map((photo, index) => (
-                  <MobilePhotoCard
-                    key={photo.id}
-                    photo={photo}
-                    index={index}
-                    isSelected={isPhotoSelected(photo.id)}
-                    isSelectionMode={isSelectionMode}
-                    onToggleSelection={togglePhotoSelection}
-                    onLongPress={handleLongPress}
-                    onView={handlePhotoView}
-                    onMakeSticker={handlePhotoMakeSticker}
-                  />
+                  <div key={photo.id} data-photo-id={photo.id}>
+                    <MobilePhotoCard
+                      photo={photo}
+                      index={index}
+                      isSelected={isPhotoSelected(photo.id)}
+                      isSelectionMode={isSelectionMode}
+                      onToggleSelection={togglePhotoSelection}
+                      onLongPress={handleLongPress}
+                      onView={handlePhotoView}
+                      onMakeSticker={handlePhotoMakeSticker}
+                    />
+                  </div>
                 ))}
               </div>
 

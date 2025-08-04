@@ -11,6 +11,7 @@ import MobilePhotoCard from '../components/MobilePhotoCard';
 import MobileStickerCustomizer from '../components/MobileStickerCustomizer';
 import { photoService } from '../services/photoService';
 import { authService } from '../services/authService';
+import { photoCacheService } from '../services/photoCacheService';
 
 const Gallery = () => {
   const navigate = useNavigate();
@@ -50,22 +51,43 @@ const Gallery = () => {
     triggerHapticFeedback
   } = useMobilePhotoSelection(photos, 50);
 
-  // Load photos from PocketBase or fallback to localStorage
-  const loadPhotos = useCallback(async () => {
+  // Load photos with caching for instant display
+  const loadPhotos = useCallback(async (useBackgroundRefresh = false) => {
     console.log('🖼️ Loading photos...');
-    setLoading(true);
+    
+    const userId = authService.isAuthenticated ? authService.pb.authStore.model?.id : 'anonymous';
+    
+    // First, try to load from cache for instant display
+    const cachedPhotos = photoCacheService.getPhotos(userId);
+    if (cachedPhotos && cachedPhotos.length > 0) {
+      console.log('📦 Using cached photos for instant display:', cachedPhotos.length, 'photos');
+      setPhotos(cachedPhotos);
+      setLoading(false);
+      
+      // If using background refresh, don't return - continue to fetch fresh data
+      if (!useBackgroundRefresh) {
+        setLastSyncTime(new Date());
+        return;
+      }
+    } else {
+      setLoading(true);
+    }
     
     try {
       if (authService.isAuthenticated) {
-        console.log('🖼️ User authenticated, loading from PocketBase...');
+        console.log('🖼️ User authenticated, fetching fresh data from PocketBase...');
         const result = await photoService.getUserPhotos();
         if (result.success) {
+          // Cache the fresh data
+          photoCacheService.setPhotos(result.photos, userId);
           setPhotos(result.photos);
-          console.log('🖼️ Photos loaded from PocketBase:', result.photos.length, 'photos');
+          console.log('🖼️ Fresh photos loaded from PocketBase:', result.photos.length, 'photos');
         } else {
           console.error('🖼️ Error loading photos from PocketBase:', result.error);
-          // Fallback to localStorage if PocketBase fails
-          loadPhotosFromLocalStorage();
+          // Only fallback if we don't have cached data
+          if (!cachedPhotos) {
+            loadPhotosFromLocalStorage();
+          }
         }
       } else {
         console.log('🖼️ User not authenticated, loading from localStorage');
@@ -75,8 +97,10 @@ const Gallery = () => {
       setLastSyncTime(new Date());
     } catch (error) {
       console.error('🖼️ Error loading photos:', error);
-      // Fallback to localStorage on error
-      loadPhotosFromLocalStorage();
+      // Only fallback if we don't have cached data
+      if (!cachedPhotos) {
+        loadPhotosFromLocalStorage();
+      }
     } finally {
       setLoading(false);
     }
@@ -141,11 +165,24 @@ const Gallery = () => {
     }
   });
 
+  // Background refresh function
+  const backgroundRefresh = useCallback(async () => {
+    console.log('🔄 Starting background refresh...');
+    await loadPhotos(true); // Use background refresh mode
+  }, [loadPhotos]);
+
   // Load photos on component mount and when auth state changes
   useEffect(() => {
     console.log('🖼️ Gallery component mounted');
-    loadPhotos();
-  }, [loadPhotos]);
+    loadPhotos(); // Initial load with cache
+    
+    // Schedule background refresh after a short delay
+    const timer = setTimeout(() => {
+      backgroundRefresh();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [loadPhotos, backgroundRefresh]);
 
   // Listen for auth state changes
   useEffect(() => {

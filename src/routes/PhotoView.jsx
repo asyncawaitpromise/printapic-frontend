@@ -6,6 +6,7 @@ import { PROMPT_STYLES } from '../data/workflowData';
 import { imageProcessingService } from '../services/imageProcessingService';
 import { photoService } from '../services/photoService';
 import { authService } from '../services/authService';
+import { photoCacheService } from '../services/photoCacheService';
 import { useStickerProcessor } from '../hooks/useStickerProcessor';
 
 const PhotoView = () => {
@@ -42,11 +43,26 @@ const PhotoView = () => {
   // Load photos and find the specific photo
   useEffect(() => {
     const loadPhotos = async () => {
+      const userId = authService.isAuthenticated ? authService.pb.authStore.model?.id : 'anonymous';
+      
+      // First, try to load from cache for instant display
+      const cachedPhotos = photoCacheService.getPhotos(userId);
+      if (cachedPhotos && cachedPhotos.length > 0) {
+        console.log('📦 PhotoView: Using cached photos for instant display:', cachedPhotos.length, 'photos');
+        setPhotos(cachedPhotos);
+        const foundPhoto = cachedPhotos.find(p => p.id === photoId);
+        setPhoto(foundPhoto || null);
+        setLoading(false);
+        return; // Don't fetch fresh data for PhotoView - cache is sufficient
+      }
+      
       setLoading(true);
       try {
         if (authService.isAuthenticated) {
           const result = await photoService.getUserPhotos();
           if (result.success) {
+            // Cache the fresh data
+            photoCacheService.setPhotos(result.photos, userId);
             setPhotos(result.photos);
             const foundPhoto = result.photos.find(p => p.id === photoId);
             setPhoto(foundPhoto || null);

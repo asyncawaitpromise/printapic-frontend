@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes, ScrollRestoration } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ProtectedRoute, PublicOnlyRoute, OptionalRoute } from './components/AuthWrapper.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
@@ -18,16 +18,6 @@ const App = () => {
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <ScrollRestoration 
-          getKey={(location, matches) => {
-            // Custom key to prevent React Router's default scroll-to-top behavior
-            // Let our custom ScrollToTop component handle gallery scroll preservation
-            if (location.pathname === '/gallery') {
-              return 'gallery-preserve';
-            }
-            return location.key;
-          }}
-        />
         <Routes>
           <Route path="/" element={<OptionalRoute><Homepage /></OptionalRoute>} />
           <Route path="/camera" element={<ProtectedRoute><Camera /></ProtectedRoute>} />

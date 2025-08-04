@@ -20,7 +20,7 @@ const ScrollToTop = () => {
     // Handle scroll behavior based on the new route
     if (pathname === '/gallery') {
       // Restore previous scroll position for gallery
-      // Wait for content to render with progressive delays
+      // Use multiple strategies to ensure scroll restoration works
       const restoreScrollPosition = () => {
         const targetPosition = galleryScrollPosition;
         console.log('📍 Attempting to restore Gallery scroll to:', targetPosition);
@@ -30,12 +30,22 @@ const ScrollToTop = () => {
           const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
           
           if (maxScroll >= targetPosition) {
-            window.scrollTo(0, targetPosition);
+            // Use both scrollTo methods to ensure it works across browsers/scenarios
+            window.scrollTo({ top: targetPosition, behavior: 'instant' });
+            document.documentElement.scrollTop = targetPosition;
             console.log('📍 Successfully restored scroll position to:', targetPosition);
+            
+            // Verify the scroll actually happened and retry if needed
+            setTimeout(() => {
+              if (Math.abs(window.scrollY - targetPosition) > 10) {
+                console.log('📍 Scroll verification failed, retrying...');
+                window.scrollTo(0, targetPosition);
+              }
+            }, 50);
           } else {
-            // Page hasn't fully rendered yet, try again
+            // Page hasn't fully rendered yet, try again with longer delay
             console.log('📍 Page height insufficient, retrying scroll restoration...');
-            setTimeout(restoreScrollPosition, 100);
+            setTimeout(restoreScrollPosition, 150);
           }
         } else {
           // If no saved position (first visit), scroll to top
@@ -43,15 +53,13 @@ const ScrollToTop = () => {
         }
       };
 
-      // Start restoration with multiple attempts
-      setTimeout(restoreScrollPosition, 200); // Initial delay for React render
-    } else if (prevPath === '/gallery') {
-      // Only scroll to top when NOT returning to gallery
-      // This prevents scroll-to-top from interfering with gallery scroll restoration
-      console.log('📍 Navigating away from gallery - scroll to top');
-      window.scrollTo(0, 0);
+      // Multiple restoration attempts with increasing delays
+      setTimeout(restoreScrollPosition, 100); // Quick attempt
+      setTimeout(restoreScrollPosition, 300); // Fallback attempt
     } else {
-      // Scroll to top for other route transitions (not involving gallery)
+      // For all non-gallery routes, scroll to top
+      // This includes when navigating away from gallery
+      console.log('📍 Navigating to non-gallery route - scroll to top');
       window.scrollTo(0, 0);
     }
 

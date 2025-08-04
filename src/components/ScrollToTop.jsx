@@ -37,13 +37,21 @@ const ScrollToTop = () => {
             console.log('📍 Page height insufficient, retrying scroll restoration...');
             setTimeout(restoreScrollPosition, 100);
           }
+        } else {
+          // If no saved position (first visit), scroll to top
+          window.scrollTo(0, 0);
         }
       };
 
       // Start restoration with multiple attempts
       setTimeout(restoreScrollPosition, 200); // Initial delay for React render
+    } else if (prevPath === '/gallery') {
+      // Only scroll to top when NOT returning to gallery
+      // This prevents scroll-to-top from interfering with gallery scroll restoration
+      console.log('📍 Navigating away from gallery - scroll to top');
+      window.scrollTo(0, 0);
     } else {
-      // Scroll to top for all other routes (PhotoView, etc.)
+      // Scroll to top for other route transitions (not involving gallery)
       window.scrollTo(0, 0);
     }
 

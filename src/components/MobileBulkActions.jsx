@@ -123,36 +123,6 @@ const MobileBulkActions = ({
 
         {/* Action Buttons Grid */}
         <div className="grid grid-cols-2 gap-3">
-          {/* Convert to Stickers - Only show for single selection */}
-          {selectedCount === 1 && (
-            <button
-              onClick={handleConvertToStickers}
-              disabled={isProcessing}
-              className="btn btn-primary btn-lg gap-2 h-14"
-            >
-              <Zap size={20} />
-              <div className="text-left">
-                <div className="font-semibold">Make Stickers</div>
-                <div className="text-xs opacity-70">AI Processing</div>
-              </div>
-            </button>
-          )}
-
-          {/* Share - Only show for single selection */}
-          {selectedCount === 1 && (
-            <button
-              onClick={handleShare}
-              disabled={isProcessing}
-              className="btn btn-outline btn-lg gap-2 h-14"
-            >
-              <Share size={20} />
-              <div className="text-left">
-                <div className="font-semibold">Share</div>
-                <div className="text-xs opacity-70">Export Photos</div>
-              </div>
-            </button>
-          )}
-
           {/* Download */}
           <button
             onClick={handleDownload}

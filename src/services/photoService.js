@@ -126,12 +126,34 @@ class PhotoService {
       // Determine which collection to delete from
       if (collectionType === 'edits') {
         collectionName = 'printapic_edits';
+        // For edits, just delete the edit record directly
+        await this.pb.collection(collectionName).delete(photoId);
+        console.log(`✅ Deleted edit from ${collectionName}:`, photoId);
       } else {
         collectionName = this.collectionName; // 'printapic_photos'
+        
+        // For photos, we need to delete related edits first (cascade deletion)
+        // Find all edits that reference this photo
+        try {
+          const relatedEdits = await this.pb.collection('printapic_edits').getFullList({
+            filter: `photo = "${photoId}"`
+          });
+          
+          // Delete all related edits first
+          for (const edit of relatedEdits) {
+            await this.pb.collection('printapic_edits').delete(edit.id);
+            console.log(`✅ Deleted related edit: ${edit.id}`);
+          }
+        } catch (editError) {
+          console.warn('Could not fetch or delete related edits:', editError.message);
+          // Continue with photo deletion even if edit cleanup fails
+        }
+        
+        // Now delete the photo itself
+        await this.pb.collection(collectionName).delete(photoId);
+        console.log(`✅ Deleted photo from ${collectionName}:`, photoId);
       }
       
-      await this.pb.collection(collectionName).delete(photoId);
-      console.log(`✅ Deleted from ${collectionName}:`, photoId);
       return { success: true };
     } catch (error) {
       console.error('Failed to delete photo:', error);

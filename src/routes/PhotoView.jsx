@@ -290,9 +290,16 @@ const PhotoView = () => {
       return stickerEditId;
     }
     
-    // If photo has an associated edit from previous processing, could use that
-    // For now, return null if no sticker is ready
+    // If API processing completed successfully, we should have an edit ID
+    // This would require tracking the edit ID from API processing completion
+    // For now, we'll focus on sticker processing, but this can be extended
+    
     return null;
+  };
+
+  // Check if we have any completed processing that can be ordered
+  const hasOrderableEdit = () => {
+    return isStickerComplete && stickerEditId;
   };
 
   if (loading) {
@@ -426,6 +433,7 @@ const PhotoView = () => {
           progress={stickerProgress}
           message={stickerMessage}
           resultUrl={stickerResultUrl}
+          onAddToOrder={() => setShowAddToOrderModal(true)}
         />
         
         {/* Artistic Effects Section */}
@@ -520,7 +528,7 @@ const PhotoView = () => {
           )}
           
           {/* Add to Order Button */}
-          {isStickerComplete && (
+          {hasOrderableEdit() && (
             <button 
               className="btn btn-sm btn-success gap-2 w-full mb-2"
               onClick={() => setShowAddToOrderModal(true)}

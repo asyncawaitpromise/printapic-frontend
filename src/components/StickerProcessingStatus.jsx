@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle } from 'react-feather';
+import { AlertCircle, ShoppingCart } from 'react-feather';
 
 const StickerProcessingStatus = ({
   isProcessing,
@@ -8,7 +8,8 @@ const StickerProcessingStatus = ({
   error,
   progress,
   message,
-  resultUrl
+  resultUrl,
+  onAddToOrder
 }) => {
   if (!isProcessing && !isComplete && !hasError) {
     return null;
@@ -59,13 +60,24 @@ const StickerProcessingStatus = ({
             alt="Generated sticker"
             className="max-w-full h-auto max-h-32 rounded-lg border mx-auto"
           />
-          <a
-            href={resultUrl}
-            download="sticker.png"
-            className="btn btn-success btn-sm w-full"
-          >
-            Download Sticker
-          </a>
+          <div className="flex gap-2">
+            {onAddToOrder && (
+              <button
+                onClick={onAddToOrder}
+                className="btn btn-primary btn-sm flex-1 gap-2"
+              >
+                <ShoppingCart size={16} />
+                Add to Order
+              </button>
+            )}
+            <a
+              href={resultUrl}
+              download="sticker.png"
+              className="btn btn-success btn-sm flex-1"
+            >
+              Download
+            </a>
+          </div>
         </div>
       )}
     </div>

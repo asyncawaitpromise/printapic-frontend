@@ -290,16 +290,18 @@ const PhotoView = () => {
       return stickerEditId;
     }
     
-    // If API processing completed successfully, we should have an edit ID
-    // This would require tracking the edit ID from API processing completion
-    // For now, we'll focus on sticker processing, but this can be extended
+    // For regular photos without processing, we can use the photo's PB ID as the "edit" ID
+    // The ordering system will handle this appropriately
+    if (photo.pbId) {
+      return photo.pbId;
+    }
     
     return null;
   };
 
-  // Check if we have any completed processing that can be ordered
+  // Any photo can be ordered - no need to check for processing completion
   const hasOrderableEdit = () => {
-    return isStickerComplete && stickerEditId;
+    return true; // Always allow ordering
   };
 
   if (loading) {

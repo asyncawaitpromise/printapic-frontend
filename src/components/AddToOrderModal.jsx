@@ -141,15 +141,14 @@ const AddToOrderModal = ({ photo, editId, isOpen, onClose, onSuccess }) => {
             </div>
           </div>
           
-          {/* Note about processing */}
-          {!editId && (
-            <div className="alert alert-warning mb-4">
-              <div className="text-sm">
-                <strong>Note:</strong> This photo needs to be processed before ordering. 
-                Please apply an artistic effect first.
-              </div>
+          {/* Note about photo type */}
+          <div className="alert alert-info mb-4">
+            <div className="text-sm">
+              <strong>Print Type:</strong> {editId && editId !== photo.pbId ? 
+                'Processed photo with artistic effects' : 
+                'Original photo'}
             </div>
-          )}
+          </div>
         </div>
         
         {/* Footer */}
@@ -164,7 +163,7 @@ const AddToOrderModal = ({ photo, editId, isOpen, onClose, onSuccess }) => {
           <button 
             className="btn btn-primary flex-1 gap-2"
             onClick={handleAddToCart}
-            disabled={isAdding || !editId}
+            disabled={isAdding}
           >
             {isAdding ? (
               <>

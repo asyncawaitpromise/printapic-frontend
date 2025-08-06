@@ -29,18 +29,55 @@ class OrderService {
         throw new Error(`Insufficient tokens. You have ${user.tokens} tokens but need 100 tokens to place an order.`);
       }
 
-      // Validate cart items have edit IDs
-      const editIds = cartItems.map(item => item.editId).filter(Boolean);
-      if (editIds.length === 0) {
-        throw new Error('Cart contains no valid processed photos');
+      // Process cart items and ensure we have valid edit IDs
+      const processedEditIds = [];
+      
+      for (const item of cartItems) {
+        if (!item.editId) {
+          throw new Error('Cart item missing photo/edit ID');
+        }
+        
+        let editId = item.editId;
+        
+        // Check if this editId exists in the edits collection
+        try {
+          await this.pb.collection('printapic_edits').getOne(editId);
+          // If we get here, it's a valid edit record
+          processedEditIds.push(editId);
+        } catch (error) {
+          // If not found, this might be a photo ID, so create a print edit record
+          if (error.status === 404) {
+            try {
+              // Verify the photo exists
+              const photo = await this.pb.collection('printapic_photos').getOne(editId);
+              
+              // Create a simple edit record for printing the original photo
+              const printEdit = await this.pb.collection('printapic_edits').create({
+                user: userId,
+                photo: photo.id,
+                status: 'done', // Mark as done since it's just the original
+                tokens_cost: 0, // No cost for original photo "processing"
+                completed: new Date().toISOString()
+              });
+              
+              processedEditIds.push(printEdit.id);
+            } catch (photoError) {
+              throw new Error(`Invalid photo/edit ID: ${editId}`);
+            }
+          } else {
+            throw new Error(`Error validating edit ID ${editId}: ${error.message}`);
+          }
+        }
       }
 
-      if (editIds.length !== cartItems.length) {
-        throw new Error('Some cart items do not have processed photos. Please ensure all photos are processed before ordering.');
-      }
+      // Update cart items to use processed edit IDs
+      const updatedCartItems = cartItems.map((item, index) => ({
+        ...item,
+        editId: processedEditIds[index]
+      }));
 
       // Create order data
-      const orderData = createOrder(cartItems, shippingAddress, userId);
+      const orderData = createOrder(updatedCartItems, shippingAddress, userId);
       
       // Create order in PocketBase
       const order = await this.pb.collection(this.collectionName).create(orderData);

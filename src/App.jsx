@@ -12,6 +12,7 @@ import SignUp from "./routes/SignUp.jsx";
 import Settings from "./routes/Settings.jsx";
 import Pricing from "./routes/Pricing.jsx";
 import Contact from "./routes/Contact.jsx";
+import Cart from "./routes/Cart.jsx";
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
           <Route path="/camera" element={<ProtectedRoute><Camera /></ProtectedRoute>} />
           <Route path="/gallery" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
           <Route path="/photo/:photoId" element={<ProtectedRoute><PhotoView /></ProtectedRoute>} />
+          <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
           <Route path="/signin" element={<PublicOnlyRoute><SignIn /></PublicOnlyRoute>} />
           <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

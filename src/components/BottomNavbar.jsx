@@ -1,12 +1,40 @@
-import React from 'react';
-import { LogOut, Settings, Camera, CreditCard, Image } from 'react-feather';
+import React, { useState, useEffect } from 'react';
+import { LogOut, Settings, Camera, CreditCard, Image, ShoppingCart } from 'react-feather';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { cartService } from '../services/cartService.js';
 
 const BottomNavbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const [cartItemCount, setCartItemCount] = useState(0);
+  
+  // Load cart item count on mount and when location changes
+  useEffect(() => {
+    const updateCartCount = () => {
+      const count = cartService.getCartItemCount();
+      setCartItemCount(count);
+    };
+    
+    updateCartCount();
+    
+    // Listen for storage changes (when cart is modified in other tabs)
+    const handleStorageChange = (e) => {
+      if (e.key === 'printapic-cart') {
+        updateCartCount();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also update when navigating (in case cart was modified on other pages)
+    updateCartCount();
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [location.pathname]);
   
   const isActive = (path) => {
     if (path === '/') {
@@ -31,11 +59,16 @@ const BottomNavbar = () => {
     <div className="btm-nav bg-base-100 border-t border-base-300 shadow-lg flex">
       <div className="flex-grow-[1] cursor-default hidden sm:block"></div>
       <Link 
-        to="/pricing" 
-        className={isActive('/pricing') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
-        title="Pricing"
+        to="/cart" 
+        className={`${isActive('/cart') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'} relative`}
+        title="Shopping Cart"
       >
-        <CreditCard size={22} />
+        <ShoppingCart size={22} />
+        {cartItemCount > 0 && (
+          <div className="absolute -top-2 -right-2 bg-primary text-primary-content text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            {cartItemCount > 99 ? '99+' : cartItemCount}
+          </div>
+        )}
       </Link>
       <Link 
         to="/gallery" 

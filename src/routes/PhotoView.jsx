@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Check, AlertCircle, Settings, Edit3, Star, Camera, Layers, Aperture, PenTool, ArrowLeft } from 'react-feather';
+import { X, Trash2, Check, AlertCircle, Settings, Edit3, Star, Camera, Layers, Aperture, PenTool, ArrowLeft, ShoppingCart } from 'react-feather';
 import { useParams, useNavigate } from 'react-router-dom';
 import StickerProcessingStatus from '../components/StickerProcessingStatus';
+import AddToOrderModal from '../components/AddToOrderModal';
 import { PROMPT_STYLES } from '../data/workflowData';
 import { imageProcessingService } from '../services/imageProcessingService';
 import { photoService } from '../services/photoService';
@@ -24,6 +25,8 @@ const PhotoView = () => {
     currentEffect: null
   });
   const [userTokens, setUserTokens] = useState(0);
+  const [showAddToOrderModal, setShowAddToOrderModal] = useState(false);
+  const [addToCartSuccess, setAddToCartSuccess] = useState(null);
 
   // Sticker processing
   const {
@@ -273,6 +276,25 @@ const PhotoView = () => {
     }
   };
 
+  // Handle add to cart success
+  const handleAddToCartSuccess = (successData) => {
+    setAddToCartSuccess(successData);
+    // Clear success message after 3 seconds
+    setTimeout(() => setAddToCartSuccess(null), 3000);
+  };
+
+  // Get the edit ID for ordering (from completed sticker or other processing)
+  const getEditIdForOrdering = () => {
+    // If sticker processing is complete and has a result, use the sticker edit ID
+    if (isStickerComplete && stickerEditId) {
+      return stickerEditId;
+    }
+    
+    // If photo has an associated edit from previous processing, could use that
+    // For now, return null if no sticker is ready
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-base-100 flex items-center justify-center">
@@ -387,6 +409,14 @@ const PhotoView = () => {
           </div>
         </div>
         
+        {/* Add to Cart Success Message */}
+        {addToCartSuccess && (
+          <div className="alert alert-success mb-4">
+            <Check size={16} />
+            <span className="text-sm">{addToCartSuccess.message}</span>
+          </div>
+        )}
+        
         {/* Processing Status */}
         <StickerProcessingStatus
           isProcessing={isStickerProcessing}
@@ -489,6 +519,17 @@ const PhotoView = () => {
             </button>
           )}
           
+          {/* Add to Order Button */}
+          {isStickerComplete && (
+            <button 
+              className="btn btn-sm btn-success gap-2 w-full mb-2"
+              onClick={() => setShowAddToOrderModal(true)}
+            >
+              <ShoppingCart size={16} />
+              Add to Order
+            </button>
+          )}
+          
           {/* Primary Actions */}
           <div className="flex gap-2">
             <button 
@@ -509,6 +550,15 @@ const PhotoView = () => {
           </div>
         </div>
       </div>
+      
+      {/* Add to Order Modal */}
+      <AddToOrderModal
+        photo={photo}
+        editId={getEditIdForOrdering()}
+        isOpen={showAddToOrderModal}
+        onClose={() => setShowAddToOrderModal(false)}
+        onSuccess={handleAddToCartSuccess}
+      />
     </div>
   );
 };

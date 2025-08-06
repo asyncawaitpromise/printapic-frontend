@@ -64,7 +64,7 @@ const Cart = () => {
 
   // Validate shipping address
   const isShippingValid = () => {
-    const required = ['firstName', 'lastName', 'addressLine1', 'city', 'state', 'zipCode'];
+    const required = ['name', 'addressLine1', 'city', 'state', 'zipCode'];
     return required.every(field => shippingAddress[field].trim() !== '');
   };
 
@@ -177,31 +177,17 @@ const Cart = () => {
   // Render shipping form
   const renderShippingForm = () => (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="label">
-            <span className="label-text">First Name *</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered w-full"
-            value={shippingAddress.firstName}
-            onChange={(e) => handleShippingChange('firstName', e.target.value)}
-            placeholder="John"
-          />
-        </div>
-        <div>
-          <label className="label">
-            <span className="label-text">Last Name *</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered w-full"
-            value={shippingAddress.lastName}
-            onChange={(e) => handleShippingChange('lastName', e.target.value)}
-            placeholder="Doe"
-          />
-        </div>
+      <div>
+        <label className="label">
+          <span className="label-text">Full Name *</span>
+        </label>
+        <input
+          type="text"
+          className="input input-bordered w-full"
+          value={shippingAddress.name}
+          onChange={(e) => handleShippingChange('name', e.target.value)}
+          placeholder="John Doe"
+        />
       </div>
       
       <div>

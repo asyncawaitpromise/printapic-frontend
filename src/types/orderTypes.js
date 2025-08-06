@@ -42,8 +42,7 @@ export const createCartItem = (photoId, editId, size, quantity) => {
 
 // Shipping address structure
 export const createShippingAddress = () => ({
-  firstName: '',
-  lastName: '',
+  name: '',
   addressLine1: '',
   addressLine2: '',
   city: '',

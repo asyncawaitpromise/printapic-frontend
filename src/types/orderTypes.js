@@ -3,31 +3,42 @@
  * Based on PocketBase schema from createPrintapicCollections.js
  */
 
-// Size options for prints - All orders cost 100 tokens regardless of size/quantity
+// Size options for prints with token pricing
 export const PRINT_SIZES = {
   small: {
     label: 'Small (4x6")',
-    dimensions: '4" x 6"'
+    dimensions: '4" x 6"',
+    tokenPrice: 200
   },
   medium: {
     label: 'Medium (5x7")',
-    dimensions: '5" x 7"'
+    dimensions: '5" x 7"',
+    tokenPrice: 250
   },
   large: {
     label: 'Large (8x10")',
-    dimensions: '8" x 10"'
+    dimensions: '8" x 10"',
+    tokenPrice: 300
   }
 };
 
 // Order item structure (for cart items before finalizing)
-export const createCartItem = (photoId, editId, size, quantity) => ({
-  id: `cart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-  photoId,
-  editId, // This will be the processed photo/edit ID
-  size,
-  quantity,
-  addedAt: new Date().toISOString()
-});
+export const createCartItem = (photoId, editId, size, quantity) => {
+  const printSize = PRINT_SIZES[size];
+  const unitPrice = printSize.tokenPrice;
+  const totalPrice = unitPrice * quantity;
+  
+  return {
+    id: `cart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    photoId,
+    editId, // This will be the processed photo/edit ID
+    size,
+    quantity,
+    unitPrice,
+    totalPrice,
+    addedAt: new Date().toISOString()
+  };
+};
 
 // Shipping address structure
 export const createShippingAddress = () => ({
@@ -44,12 +55,12 @@ export const createShippingAddress = () => ({
 // Payment method structure (for UI only - actual payment handled by tokens)
 export const createPaymentMethod = () => ({
   type: 'tokens', // Only tokens supported
-  description: 'Pay with 100 tokens'
+  description: 'Pay with tokens based on size and quantity'
 });
 
 // Order structure (matches PocketBase schema)
 export const createOrder = (cartItems, shippingAddress, userId) => {
-  const totalTokensCost = 100; // Fixed cost as per requirements
+  const totalTokensCost = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
   
   return {
     user: userId,

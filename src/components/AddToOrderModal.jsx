@@ -42,6 +42,8 @@ const AddToOrderModal = ({ photo, editId, isOpen, onClose, onSuccess }) => {
   };
 
   const selectedPrintSize = PRINT_SIZES[selectedSize];
+  const unitPrice = selectedPrintSize.tokenPrice;
+  const totalPrice = unitPrice * quantity;
 
   if (!isOpen) return null;
 
@@ -89,9 +91,14 @@ const AddToOrderModal = ({ photo, editId, isOpen, onClose, onSuccess }) => {
                     onChange={(e) => setSelectedSize(e.target.value)}
                     className="radio radio-primary mr-3"
                   />
-                  <div className="flex-1">
-                    <div className="font-medium">{sizeData.label}</div>
-                    <div className="text-sm text-base-content/70">{sizeData.dimensions}</div>
+                  <div className="flex-1 flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{sizeData.label}</div>
+                      <div className="text-sm text-base-content/70">{sizeData.dimensions}</div>
+                    </div>
+                    <div className="font-bold text-primary">
+                      {sizeData.tokenPrice} tokens
+                    </div>
                   </div>
                 </label>
               ))}
@@ -131,17 +138,23 @@ const AddToOrderModal = ({ photo, editId, isOpen, onClose, onSuccess }) => {
               <span>Order:</span>
               <span>{quantity}x {selectedPrintSize.label}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">Total Cost:</span>
-              <span className="font-bold text-lg text-primary">100 tokens</span>
+            <div className="flex justify-between items-center mb-2">
+              <span>{unitPrice} tokens each:</span>
+              <span>{totalPrice} tokens</span>
+            </div>
+            <div className="border-t border-base-300 pt-2">
+              <div className="flex justify-between items-center">
+                <span className="font-bold">Total Cost:</span>
+                <span className="font-bold text-lg text-primary">{totalPrice} tokens</span>
+              </div>
             </div>
           </div>
           
           {/* Important pricing note */}
           <div className="alert alert-info mb-4">
             <div className="text-sm">
-              <strong>Note:</strong> All orders cost 100 tokens regardless of size or quantity. 
-              This covers processing, printing, and shipping.
+              <strong>Pricing:</strong> Small (200 tokens), Medium (250 tokens), Large (300 tokens). 
+              Price includes processing, printing, and shipping.
               {editId && editId !== photo.pbId && (
                 <>
                   <br />

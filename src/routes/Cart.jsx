@@ -80,8 +80,9 @@ const Cart = () => {
       return;
     }
 
-    if (userTokens < 100) {
-      alert(`Insufficient tokens. You have ${userTokens} tokens but need 100 tokens to place an order.`);
+    const orderTotal = cartTotals.totalTokens;
+    if (userTokens < orderTotal) {
+      alert(`Insufficient tokens. You have ${userTokens} tokens but need ${orderTotal} tokens to place an order.`);
       return;
     }
 
@@ -94,7 +95,7 @@ const Cart = () => {
         // Clear cart on success
         cartService.clearCart();
         setCartItems([]);
-        setCartTotals({ itemCount: 0, tokensCost: 100, items: [] });
+        setCartTotals({ itemCount: 0, totalTokens: 0, items: [] });
         
         setOrderResult(result);
         setCurrentStep('confirmation');
@@ -130,10 +131,10 @@ const Cart = () => {
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-sm sm:text-base truncate">{printSize.label}</h4>
                   <p className="text-xs sm:text-sm text-base-content/70">
-                    Photo #{item.photoId}
+                    Photo #{item.photoId} • {printSize.dimensions}
                   </p>
-                  <p className="text-xs sm:text-sm text-base-content/70">
-                    {printSize.dimensions}
+                  <p className="text-xs sm:text-sm font-bold text-primary">
+                    {printSize.tokenPrice} tokens each • {item.totalPrice} total
                   </p>
                 </div>
               </div>
@@ -284,37 +285,42 @@ const Cart = () => {
   );
 
   // Render payment confirmation
-  const renderPaymentConfirmation = () => (
-    <div className="space-y-4">
-      <div className="alert alert-info">
-        <CreditCard size={16} />
-        <div>
-          <h4 className="font-bold">Payment Method</h4>
-          <p className="text-sm">This order will be paid using 100 tokens from your account.</p>
+  const renderPaymentConfirmation = () => {
+    const orderTotal = cartTotals.totalTokens;
+    const remainingTokens = userTokens - orderTotal;
+    
+    return (
+      <div className="space-y-4">
+        <div className="alert alert-info">
+          <CreditCard size={16} />
+          <div>
+            <h4 className="font-bold">Payment Method</h4>
+            <p className="text-sm">This order will be paid using {orderTotal} tokens from your account.</p>
+          </div>
         </div>
-      </div>
-      
-      <div className="bg-base-200 p-4 rounded-lg">
-        <h4 className="font-bold mb-2">Token Balance</h4>
-        <div className="flex justify-between items-center">
-          <span>Current Balance:</span>
-          <span className="font-bold">{userTokens} tokens</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span>Order Cost:</span>
-          <span className="font-bold text-error">-100 tokens</span>
-        </div>
-        <div className="border-t border-base-300 mt-2 pt-2">
+        
+        <div className="bg-base-200 p-4 rounded-lg">
+          <h4 className="font-bold mb-2">Token Balance</h4>
           <div className="flex justify-between items-center">
-            <span className="font-bold">After Order:</span>
-            <span className={`font-bold ${userTokens >= 100 ? 'text-success' : 'text-error'}`}>
-              {userTokens - 100} tokens
-            </span>
+            <span>Current Balance:</span>
+            <span className="font-bold">{userTokens} tokens</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Order Cost:</span>
+            <span className="font-bold text-error">-{orderTotal} tokens</span>
+          </div>
+          <div className="border-t border-base-300 mt-2 pt-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold">After Order:</span>
+              <span className={`font-bold ${remainingTokens >= 0 ? 'text-success' : 'text-error'}`}>
+                {remainingTokens} tokens
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Render order confirmation
   const renderOrderConfirmation = () => (
@@ -374,7 +380,7 @@ const Cart = () => {
     switch (currentStep) {
       case 'cart': return cartItems.length > 0;
       case 'shipping': return isShippingValid();
-      case 'payment': return userTokens >= 100;
+      case 'payment': return userTokens >= cartTotals.totalTokens;
       default: return false;
     }
   };
@@ -473,15 +479,15 @@ const Cart = () => {
                 <span>Items ({cartTotals.itemCount}):</span>
                 <span>{cartTotals.itemCount} print{cartTotals.itemCount !== 1 ? 's' : ''}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between font-bold">
                 <span>Total Cost:</span>
-                <span className="font-bold text-primary">100 tokens</span>
+                <span className="text-primary">{cartTotals.totalTokens} tokens</span>
               </div>
             </div>
             <div className="mt-3 p-3 bg-info/10 border border-info/20 rounded-lg">
-              <p className="text-sm text-info-content">
-                <strong>Note:</strong> All orders cost 100 tokens regardless of size or quantity. 
-                This covers processing, printing, and shipping.
+              <p className="text-sm">
+                <strong>Pricing:</strong> Small (200 tokens), Medium (250 tokens), Large (300 tokens). 
+                Includes processing, printing, and shipping.
               </p>
             </div>
           </div>

@@ -43,6 +43,8 @@ class CartService {
     if (existingItemIndex >= 0) {
       // Update quantity of existing item
       cartItems[existingItemIndex].quantity += quantity;
+      cartItems[existingItemIndex].totalPrice = 
+        cartItems[existingItemIndex].unitPrice * cartItems[existingItemIndex].quantity;
     } else {
       // Add new item
       const newItem = createCartItem(photoId, editId, size, quantity);
@@ -72,6 +74,8 @@ class CartService {
     
     if (itemIndex >= 0) {
       cartItems[itemIndex].quantity = newQuantity;
+      cartItems[itemIndex].totalPrice = 
+        cartItems[itemIndex].unitPrice * newQuantity;
       this.saveCartItems(cartItems);
     }
 
@@ -82,10 +86,11 @@ class CartService {
   getCartTotals() {
     const items = this.getCartItems();
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalTokens = items.reduce((sum, item) => sum + item.totalPrice, 0);
     
     return {
       itemCount,
-      tokensCost: 100, // Fixed cost as per requirements
+      totalTokens,
       items
     };
   }

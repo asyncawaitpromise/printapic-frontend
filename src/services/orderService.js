@@ -23,10 +23,12 @@ class OrderService {
         throw new Error('User ID not found');
       }
 
-      // Validate that user has enough tokens (100 tokens required)
+      // Calculate total token cost and validate user has enough tokens
+      const totalTokensCost = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
       const user = await authService.pb.collection('printapic_users').getOne(userId);
-      if (user.tokens < 100) {
-        throw new Error(`Insufficient tokens. You have ${user.tokens} tokens but need 100 tokens to place an order.`);
+      
+      if (user.tokens < totalTokensCost) {
+        throw new Error(`Insufficient tokens. You have ${user.tokens} tokens but need ${totalTokensCost} tokens to place an order.`);
       }
 
       // Process cart items and ensure we have valid edit IDs
@@ -84,7 +86,7 @@ class OrderService {
 
       // Deduct tokens from user (this should ideally be handled by backend hooks)
       await this.pb.collection('printapic_users').update(userId, {
-        tokens: user.tokens - 100
+        tokens: user.tokens - totalTokensCost
       });
 
       return {

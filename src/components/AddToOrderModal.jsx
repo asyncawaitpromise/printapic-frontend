@@ -42,7 +42,6 @@ const AddToOrderModal = ({ photo, editId, isOpen, onClose, onSuccess }) => {
   };
 
   const selectedPrintSize = PRINT_SIZES[selectedSize];
-  const totalPrice = selectedPrintSize.price * quantity;
 
   if (!isOpen) return null;
 
@@ -90,14 +89,9 @@ const AddToOrderModal = ({ photo, editId, isOpen, onClose, onSuccess }) => {
                     onChange={(e) => setSelectedSize(e.target.value)}
                     className="radio radio-primary mr-3"
                   />
-                  <div className="flex-1 flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{sizeData.label}</div>
-                      <div className="text-sm text-base-content/70">{sizeData.dimensions}</div>
-                    </div>
-                    <div className="font-bold text-primary">
-                      ${sizeData.price.toFixed(2)}
-                    </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{sizeData.label}</div>
+                    <div className="text-sm text-base-content/70">{sizeData.dimensions}</div>
                   </div>
                 </label>
               ))}
@@ -131,22 +125,35 @@ const AddToOrderModal = ({ photo, editId, isOpen, onClose, onSuccess }) => {
             </p>
           </div>
           
-          {/* Price Summary */}
+          {/* Order Summary */}
           <div className="bg-base-200 p-3 rounded-lg mb-4">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-2">
+              <span>Order:</span>
               <span>{quantity}x {selectedPrintSize.label}</span>
-              <span className="font-bold text-lg">
-                ${totalPrice.toFixed(2)}
-              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-bold">Total Cost:</span>
+              <span className="font-bold text-lg text-primary">100 tokens</span>
             </div>
           </div>
           
-          {/* Note about photo type */}
+          {/* Important pricing note */}
           <div className="alert alert-info mb-4">
             <div className="text-sm">
-              <strong>Print Type:</strong> {editId && editId !== photo.pbId ? 
-                'Processed photo with artistic effects' : 
-                'Original photo'}
+              <strong>Note:</strong> All orders cost 100 tokens regardless of size or quantity. 
+              This covers processing, printing, and shipping.
+              {editId && editId !== photo.pbId && (
+                <>
+                  <br />
+                  <strong>Print Type:</strong> Processed photo with artistic effects
+                </>
+              )}
+              {(!editId || editId === photo.pbId) && (
+                <>
+                  <br />
+                  <strong>Print Type:</strong> Original photo
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -94,7 +94,7 @@ const Cart = () => {
         // Clear cart on success
         cartService.clearCart();
         setCartItems([]);
-        setCartTotals({ itemCount: 0, subtotal: 0, tokensCost: 100, items: [] });
+        setCartTotals({ itemCount: 0, tokensCost: 100, items: [] });
         
         setOrderResult(result);
         setCurrentStep('confirmation');
@@ -114,50 +114,54 @@ const Cart = () => {
 
   // Render cart items
   const renderCartItems = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {cartItems.map((item) => {
         const printSize = PRINT_SIZES[item.size];
         return (
-          <div key={item.id} className="bg-base-200 p-4 rounded-lg">
-            <div className="flex items-center gap-4">
-              {/* Photo preview would go here if we had the photo data */}
-              <div className="w-16 h-16 bg-base-300 rounded-lg flex items-center justify-center">
-                <ShoppingCart size={24} className="text-base-content/50" />
+          <div key={item.id} className="bg-base-200 p-3 rounded-lg">
+            {/* Mobile-first layout - stack on small screens */}
+            <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
+              {/* Photo preview and info */}
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-base-300 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <ShoppingCart size={20} className="text-base-content/50" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm sm:text-base truncate">{printSize.label}</h4>
+                  <p className="text-xs sm:text-sm text-base-content/70">
+                    Photo #{item.photoId}
+                  </p>
+                  <p className="text-xs sm:text-sm text-base-content/70">
+                    {printSize.dimensions}
+                  </p>
+                </div>
               </div>
               
-              <div className="flex-1">
-                <h4 className="font-semibold">{printSize.label}</h4>
-                <p className="text-sm text-base-content/70">
-                  Photo #{item.photoId} • {printSize.dimensions}
-                </p>
-                <p className="text-sm font-bold text-primary">
-                  ${printSize.price.toFixed(2)} each
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-2">
+              {/* Quantity controls and remove button */}
+              <div className="flex items-center justify-between sm:justify-end sm:gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    className="btn btn-xs btn-circle btn-outline"
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    disabled={item.quantity <= 1}
+                  >
+                    <Minus size={12} />
+                  </button>
+                  <span className="w-6 text-center font-bold text-sm">{item.quantity}</span>
+                  <button
+                    className="btn btn-xs btn-circle btn-outline"
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    disabled={item.quantity >= 10}
+                  >
+                    <Plus size={12} />
+                  </button>
+                </div>
+                
                 <button
-                  className="btn btn-xs btn-circle btn-outline"
-                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                  disabled={item.quantity <= 1}
-                >
-                  <Minus size={12} />
-                </button>
-                <span className="w-8 text-center font-bold">{item.quantity}</span>
-                <button
-                  className="btn btn-xs btn-circle btn-outline"
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  disabled={item.quantity >= 10}
-                >
-                  <Plus size={12} />
-                </button>
-              </div>
-              
-              <div className="text-right">
-                <p className="font-bold">${item.totalPrice.toFixed(2)}</p>
-                <button
-                  className="btn btn-xs btn-error btn-outline mt-1"
+                  className="btn btn-xs btn-error btn-outline"
                   onClick={() => removeItem(item.id)}
+                  title="Remove item"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -467,18 +471,18 @@ const Cart = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Items ({cartTotals.itemCount}):</span>
-                <span>${cartTotals.subtotal.toFixed(2)}</span>
+                <span>{cartTotals.itemCount} print{cartTotals.itemCount !== 1 ? 's' : ''}</span>
               </div>
               <div className="flex justify-between">
-                <span>Processing & Shipping:</span>
-                <span>100 tokens</span>
+                <span>Total Cost:</span>
+                <span className="font-bold text-primary">100 tokens</span>
               </div>
-              <div className="border-t border-base-300 pt-2">
-                <div className="flex justify-between font-bold">
-                  <span>Total:</span>
-                  <span>100 tokens + ${cartTotals.subtotal.toFixed(2)}</span>
-                </div>
-              </div>
+            </div>
+            <div className="mt-3 p-3 bg-info/10 border border-info/20 rounded-lg">
+              <p className="text-sm text-info-content">
+                <strong>Note:</strong> All orders cost 100 tokens regardless of size or quantity. 
+                This covers processing, printing, and shipping.
+              </p>
             </div>
           </div>
         )}

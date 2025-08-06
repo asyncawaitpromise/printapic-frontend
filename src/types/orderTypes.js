@@ -3,21 +3,18 @@
  * Based on PocketBase schema from createPrintapicCollections.js
  */
 
-// Size options for prints
+// Size options for prints - All orders cost 100 tokens regardless of size/quantity
 export const PRINT_SIZES = {
   small: {
     label: 'Small (4x6")',
-    price: 5.99,
     dimensions: '4" x 6"'
   },
   medium: {
     label: 'Medium (5x7")',
-    price: 8.99,
     dimensions: '5" x 7"'
   },
   large: {
     label: 'Large (8x10")',
-    price: 14.99,
     dimensions: '8" x 10"'
   }
 };
@@ -29,8 +26,6 @@ export const createCartItem = (photoId, editId, size, quantity) => ({
   editId, // This will be the processed photo/edit ID
   size,
   quantity,
-  unitPrice: PRINT_SIZES[size].price,
-  totalPrice: PRINT_SIZES[size].price * quantity,
   addedAt: new Date().toISOString()
 });
 

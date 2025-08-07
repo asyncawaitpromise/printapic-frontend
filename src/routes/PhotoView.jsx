@@ -145,7 +145,7 @@ const PhotoView = () => {
   const navigateToPhoto = (newIndex) => {
     if (newIndex >= 0 && newIndex < photos.length) {
       const newPhoto = photos[newIndex];
-      navigate(`/photo/${newPhoto.id}`);
+      navigate(`/photo/${newPhoto.id}`, { replace: true });
     }
   };
   

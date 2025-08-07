@@ -131,24 +131,6 @@ const PhotoView = () => {
     }
   }, [photo]);
 
-  // Keyboard navigation support
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        goToPreviousPhoto();
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        goToNextPhoto();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [photoIndex, photos]);
-
   // Cleanup subscriptions on unmount
   useEffect(() => {
     return () => {
@@ -397,6 +379,24 @@ const PhotoView = () => {
       goToPreviousPhoto();
     }
   };
+
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goToPreviousPhoto();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goToNextPhoto();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [photoIndex, photos.length]);
 
   // Create artistic editing options using the real API
   const editingOptions = PROMPT_STYLES.map(style => {

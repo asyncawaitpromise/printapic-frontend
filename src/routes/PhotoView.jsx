@@ -138,6 +138,70 @@ const PhotoView = () => {
     };
   }, []);
 
+  // Calculate photo index for navigation
+  const photoIndex = photos.findIndex(p => p.id === photo?.id) || 0;
+  
+  // Swipe navigation functions
+  const navigateToPhoto = (newIndex) => {
+    if (newIndex >= 0 && newIndex < photos.length) {
+      const newPhoto = photos[newIndex];
+      navigate(`/photo/${newPhoto.id}`);
+    }
+  };
+  
+  const goToPreviousPhoto = () => {
+    navigateToPhoto(photoIndex - 1);
+  };
+  
+  const goToNextPhoto = () => {
+    navigateToPhoto(photoIndex + 1);
+  };
+
+  // Keyboard navigation support - must be after navigation functions are defined
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goToPreviousPhoto();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goToNextPhoto();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [photoIndex, photos.length, photo?.id]);
+
+  // Touch event handlers for swipe detection
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+  
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+    
+    if (isLeftSwipe) {
+      // Swipe left: go to next photo
+      goToNextPhoto();
+    }
+    if (isRightSwipe) {
+      // Swipe right: go to previous photo  
+      goToPreviousPhoto();
+    }
+  };
+
   // Delete photo
   const deletePhoto = async (photoId) => {
     const photoToDelete = photos.find(p => p.id === photoId);
@@ -334,69 +398,6 @@ const PhotoView = () => {
       </div>
     );
   }
-
-  const photoIndex = photos.findIndex(p => p.id === photo.id);
-  
-  // Swipe navigation functions
-  const navigateToPhoto = (newIndex) => {
-    if (newIndex >= 0 && newIndex < photos.length) {
-      const newPhoto = photos[newIndex];
-      navigate(`/photo/${newPhoto.id}`);
-    }
-  };
-  
-  const goToPreviousPhoto = () => {
-    navigateToPhoto(photoIndex - 1);
-  };
-  
-  const goToNextPhoto = () => {
-    navigateToPhoto(photoIndex + 1);
-  };
-  
-  // Touch event handlers for swipe detection
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-  
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-  
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-    
-    if (isLeftSwipe) {
-      // Swipe left: go to next photo
-      goToNextPhoto();
-    }
-    if (isRightSwipe) {
-      // Swipe right: go to previous photo  
-      goToPreviousPhoto();
-    }
-  };
-
-  // Keyboard navigation support
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        goToPreviousPhoto();
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        goToNextPhoto();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [photoIndex, photos.length]);
 
   // Create artistic editing options using the real API
   const editingOptions = PROMPT_STYLES.map(style => {

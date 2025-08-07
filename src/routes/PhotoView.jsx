@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Check, AlertCircle, Settings, Edit3, Star, Camera, Layers, Aperture, PenTool, ArrowLeft, ShoppingCart, Briefcase, Sun, Zap, Shield } from 'react-feather';
+import { X, Trash2, Check, AlertCircle, Settings, Edit3, Star, Camera, Layers, Aperture, PenTool, ArrowLeft, ArrowRight, ShoppingCart, Briefcase, Sun, Zap, Shield, ChevronLeft, ChevronRight } from 'react-feather';
 import { useParams, useNavigate } from 'react-router-dom';
 import StickerProcessingStatus from '../components/StickerProcessingStatus';
 import AddToOrderModal from '../components/AddToOrderModal';
@@ -27,6 +27,10 @@ const PhotoView = () => {
   const [userTokens, setUserTokens] = useState(0);
   const [showAddToOrderModal, setShowAddToOrderModal] = useState(false);
   const [addToCartSuccess, setAddToCartSuccess] = useState(null);
+  
+  // Swipe detection state
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   // Sticker processing
   const {
@@ -126,6 +130,24 @@ const PhotoView = () => {
       loadTokenBalance();
     }
   }, [photo]);
+
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goToPreviousPhoto();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goToNextPhoto();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [photoIndex, photos]);
 
   // Cleanup subscriptions on unmount
   useEffect(() => {
@@ -332,6 +354,49 @@ const PhotoView = () => {
   }
 
   const photoIndex = photos.findIndex(p => p.id === photo.id);
+  
+  // Swipe navigation functions
+  const navigateToPhoto = (newIndex) => {
+    if (newIndex >= 0 && newIndex < photos.length) {
+      const newPhoto = photos[newIndex];
+      navigate(`/photo/${newPhoto.id}`);
+    }
+  };
+  
+  const goToPreviousPhoto = () => {
+    navigateToPhoto(photoIndex - 1);
+  };
+  
+  const goToNextPhoto = () => {
+    navigateToPhoto(photoIndex + 1);
+  };
+  
+  // Touch event handlers for swipe detection
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+  
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+    
+    if (isLeftSwipe) {
+      // Swipe left: go to next photo
+      goToNextPhoto();
+    }
+    if (isRightSwipe) {
+      // Swipe right: go to previous photo  
+      goToPreviousPhoto();
+    }
+  };
 
   // Create artistic editing options using the real API
   const editingOptions = PROMPT_STYLES.map(style => {
@@ -411,7 +476,7 @@ const PhotoView = () => {
   return (
     <div className="min-h-screen bg-base-100 pb-20">
       <div className="container mx-auto px-3 sm:px-4 py-4 max-w-4xl">
-        {/* Header with back button */}
+        {/* Header with navigation */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
             <button 
@@ -421,18 +486,56 @@ const PhotoView = () => {
               <ArrowLeft size={16} />
             </button>
             <h1 className="font-bold text-lg">
-              Photo #{photoIndex + 1}
+              Photo #{photoIndex + 1} of {photos.length}
             </h1>
+          </div>
+          
+          {/* Navigation arrows */}
+          <div className="flex items-center gap-2">
+            <button
+              className={`btn btn-circle btn-sm ${photoIndex === 0 ? 'btn-disabled' : 'btn-ghost'}`}
+              onClick={goToPreviousPhoto}
+              disabled={photoIndex === 0}
+              title="Previous photo (← key)"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              className={`btn btn-circle btn-sm ${photoIndex === photos.length - 1 ? 'btn-disabled' : 'btn-ghost'}`}
+              onClick={goToNextPhoto}
+              disabled={photoIndex === photos.length - 1}
+              title="Next photo (→ key)"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
         </div>
         
-        {/* Photo */}
-        <div className="mb-4">
+        {/* Photo with swipe support */}
+        <div 
+          className="mb-4 touch-manipulation"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <img 
             src={photo.data} 
             alt={`Photo ${photo.id}`}
-            className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain rounded-lg"
+            className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain rounded-lg select-none"
+            draggable={false}
           />
+          
+          {/* Navigation indicators */}
+          <div className="flex justify-center mt-2 gap-2">
+            {photos.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  index === photoIndex ? 'bg-primary' : 'bg-base-300'
+                }`}
+              />
+            ))}
+          </div>
         </div>
         
         {/* Photo Metadata - Mobile Optimized */}

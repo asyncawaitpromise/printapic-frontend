@@ -397,6 +397,10 @@ const Gallery = () => {
       const uniqueSuffix = photo.id ? photo.id.toString().slice(-4) : idx + 1;
 
       link.download = `photo_${sanitizedTimestamp}_${uniqueSuffix}.jpg`;
+      
+      // Set target to prevent opening in new tab and force download
+      link.target = '_self';
+      link.style.display = 'none';
 
       document.body.appendChild(link);
       link.click();

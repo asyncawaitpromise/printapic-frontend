@@ -381,31 +381,50 @@ const Gallery = () => {
     }
   };
 
+  // Helper function to convert base64 to blob
+  const base64ToBlob = async (base64Data) => {
+    const response = await fetch(base64Data);
+    return response.blob();
+  };
+
   const handleDownloadSelected = async (selectedPhotos) => {
     console.log('💾 Downloading photos:', selectedPhotos.length);
     
     selectedPhotos.forEach((photo, idx) => {
       // Use setTimeout to delay each download to prevent browser blocking
-      setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = photo.data;
+      setTimeout(async () => {
+        try {
+          // Convert base64 to blob for proper download
+          const blob = await base64ToBlob(photo.data);
+          
+          // Generate a unique, readable filename using the photo timestamp + an index suffix
+          // Example: photo_2024-07-04T12-34-56.789Z_aa1.jpg  (invalid characters like ':' removed)
+          const isoString = new Date(photo.timestamp).toISOString();
+          const sanitizedTimestamp = isoString.replace(/[:]/g, '-');
 
-        // Generate a unique, readable filename using the photo timestamp + an index suffix
-        // Example: photo_2024-07-04T12-34-56.789Z_aa1.jpg  (invalid characters like ':' removed)
-        const isoString = new Date(photo.timestamp).toISOString();
-        const sanitizedTimestamp = isoString.replace(/[:]/g, '-');
+          // If the photo has an id, use part of it to guarantee uniqueness; otherwise fall back to the loop index.
+          const uniqueSuffix = photo.id ? photo.id.toString().slice(-4) : idx + 1;
+          const filename = `photo_${sanitizedTimestamp}_${uniqueSuffix}.jpg`;
 
-        // If the photo has an id, use part of it to guarantee uniqueness; otherwise fall back to the loop index.
-        const uniqueSuffix = photo.id ? photo.id.toString().slice(-4) : idx + 1;
+          // Create object URL from blob
+          const url = URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          
+          // Hide the link and ensure it doesn't interfere with the page
+          link.style.display = 'none';
 
-        link.download = `photo_${sanitizedTimestamp}_${uniqueSuffix}.jpg`;
-        
-        // Hide the link and ensure it doesn't interfere with the page
-        link.style.display = 'none';
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up the URL object to free memory
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error('Error downloading photo:', error);
+        }
       }, idx * 300); // 300ms delay between each download
     });
     

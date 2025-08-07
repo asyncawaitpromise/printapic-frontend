@@ -65,7 +65,7 @@ const BottomNavbar = () => {
       >
         <ShoppingCart size={22} />
         {cartItemCount > 0 && (
-          <div className="absolute -top-2 -right-2 bg-primary text-primary-content text-xs rounded-full w-5 h-5 flex items-center justify-center">
+          <div className="absolute -top-2 -right-2 bg-primary text-primary-content text-xs rounded-full w-5 h-5 flex items-center justify-center z-50">
             {cartItemCount > 99 ? '99+' : cartItemCount}
           </div>
         )}

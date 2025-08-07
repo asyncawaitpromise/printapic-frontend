@@ -5,12 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 **Core Development:**
-- `pnpm dev` - Start development server with Vite
+- `pnpm build` - Build for production (TypeScript check + Vite build) - Use this for testing
 - `pnpm host` - Start development server accessible on local network (port 80)
-- `pnpm build` - Build for production (TypeScript check + Vite build)
-- `pnpm lint` - Run ESLint for code quality
 - `pnpm preview` - Preview production build locally
 - `pnpm tbuild` - Build and create tar archive for deployment
+
+**Workflow:**
+After making changes, always:
+1. Run `pnpm build` to test
+2. Commit changes with `git commit`
+3. Push to repository with `git push`
 
 ## Architecture Overview
 

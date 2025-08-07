@@ -37,6 +37,38 @@ export const PROMPT_STYLES = [
   }
 ];
 
+// Transport styles for scene transformation
+export const TRANSPORT_STYLES = [
+  {
+    key: 'business-photo',
+    name: 'Business Photo',
+    description: 'Transports subject into professional business setting wearing a suit',
+    icon: '💼',
+    color: '#374151'
+  },
+  {
+    key: 'beach-vacation',
+    name: 'Beach Vacation',
+    description: 'Transports subject to tropical beach paradise with palm trees and ocean',
+    icon: '🏖️',
+    color: '#0EA5E9'
+  },
+  {
+    key: 'space-explorer',
+    name: 'Space Explorer',
+    description: 'Transports subject to futuristic space environment in a space suit',
+    icon: '🚀',
+    color: '#7C3AED'
+  },
+  {
+    key: 'medieval-knight',
+    name: 'Medieval Knight',
+    description: 'Transports subject to medieval fantasy setting as an armored knight',
+    icon: '⚔️',
+    color: '#B45309'
+  }
+];
+
 // AI Workflow Data
 export const WORKFLOWS = [
   {

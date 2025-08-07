@@ -22,7 +22,7 @@ class ImageProcessingService {
       console.log('🎯 Starting real image processing:', { photoId, promptKey });
 
       // Validate promptKey
-      const validPromptKeys = ['sticker', 'line-art', 'van-gogh', 'manga-style', 'oil-painting'];
+      const validPromptKeys = ['sticker', 'line-art', 'van-gogh', 'manga-style', 'oil-painting', 'business-photo', 'beach-vacation', 'space-explorer', 'medieval-knight'];
       if (!validPromptKeys.includes(promptKey)) {
         throw new Error(`Invalid promptKey: ${promptKey}. Valid options are: ${validPromptKeys.join(', ')}`);
       }

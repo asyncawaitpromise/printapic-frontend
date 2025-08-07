@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Check, AlertCircle, Settings, Edit3, Star, Camera, Layers, Aperture, PenTool, ArrowLeft, ShoppingCart } from 'react-feather';
+import { X, Trash2, Check, AlertCircle, Settings, Edit3, Star, Camera, Layers, Aperture, PenTool, ArrowLeft, ShoppingCart, Briefcase, Sun, Zap, Shield } from 'react-feather';
 import { useParams, useNavigate } from 'react-router-dom';
 import StickerProcessingStatus from '../components/StickerProcessingStatus';
 import AddToOrderModal from '../components/AddToOrderModal';
-import { PROMPT_STYLES } from '../data/workflowData';
+import { PROMPT_STYLES, TRANSPORT_STYLES } from '../data/workflowData';
 import { imageProcessingService } from '../services/imageProcessingService';
 import { photoService } from '../services/photoService';
 import { authService } from '../services/authService';
@@ -371,6 +371,43 @@ const PhotoView = () => {
     };
   });
 
+  // Create transport editing options using the same API structure
+  const transportOptions = TRANSPORT_STYLES.map(style => {
+    const iconMap = {
+      'business-photo': Briefcase,
+      'beach-vacation': Sun,
+      'space-explorer': Zap,
+      'medieval-knight': Shield
+    };
+
+    const isDisabled = apiProcessingState.isProcessing || 
+                      isStickerProcessing || 
+                      (!photo.pbId && !photo.hasRemote) ||
+                      userTokens < 1;
+
+    let tooltip = style.description;
+    if (!photo.pbId && !photo.hasRemote) {
+      tooltip = 'Photo must be synced to cloud first';
+    } else if (userTokens < 1) {
+      tooltip = 'Insufficient tokens (1 token required)';
+    } else if (apiProcessingState.isProcessing) {
+      tooltip = 'Processing in progress...';
+    }
+
+    return {
+      id: style.key,
+      label: style.name,
+      icon: iconMap[style.key] || Edit3,
+      action: () => {
+        handleArtisticEffect(style.key);
+      },
+      disabled: isDisabled,
+      className: 'btn-accent',
+      tooltip: tooltip,
+      tokensRequired: 1
+    };
+  });
+
   return (
     <div className="min-h-screen bg-base-100 pb-20">
       <div className="container mx-auto px-3 sm:px-4 py-4 max-w-4xl">
@@ -483,6 +520,42 @@ const PhotoView = () => {
               
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {editingOptions.map((option) => {
+                  const IconComponent = option.icon;
+                  return (
+                    <button
+                      key={option.id}
+                      className={`btn btn-sm gap-1 ${option.className} ${option.disabled ? 'btn-disabled' : ''} flex-col h-auto py-3`}
+                      onClick={option.action}
+                      disabled={option.disabled}
+                      title={option.tooltip}
+                    >
+                      <IconComponent size={16} />
+                      <span className="text-xs leading-tight text-center">
+                        {option.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Transport Effects Section */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-3">
+            <div>
+              <h4 className="font-semibold text-md">Transport Effects</h4>
+              <p className="text-xs text-base-content/60">
+                Transform your subject into different environments
+              </p>
+            </div>
+          </div>
+          
+          {showEditingOptions && (
+            <div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {transportOptions.map((option) => {
                   const IconComponent = option.icon;
                   return (
                     <button

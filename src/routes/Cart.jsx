@@ -3,6 +3,7 @@ import { ShoppingCart, Trash2, Plus, Minus, MapPin, CreditCard, ArrowLeft } from
 import { useNavigate } from 'react-router-dom';
 import { cartService } from '../services/cartService.js';
 import { orderService } from '../services/orderService.js';
+import { photoService } from '../services/photoService.js';
 import { PRINT_SIZES, createShippingAddress, ORDER_STATUS_LABELS } from '../types/orderTypes.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
@@ -17,6 +18,7 @@ const Cart = () => {
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [orderResult, setOrderResult] = useState(null);
   const [userTokens, setUserTokens] = useState(0);
+  const [photoThumbnails, setPhotoThumbnails] = useState({});
 
   // Load cart items and user tokens on mount
   useEffect(() => {
@@ -28,6 +30,48 @@ const Cart = () => {
     const totals = cartService.getCartTotals();
     setCartItems(totals.items);
     setCartTotals(totals);
+    
+    // Load photo thumbnails for cart items
+    loadPhotoThumbnails(totals.items);
+  };
+
+  const loadPhotoThumbnails = async (items) => {
+    if (!user || items.length === 0) return;
+    
+    const thumbnails = {};
+    
+    for (const item of items) {
+      try {
+        // First try to get the edit record (processed photo)
+        if (item.editId) {
+          try {
+            const editRecord = await photoService.pb.collection('printapic_edits').getOne(item.editId);
+            if (editRecord.result_image) {
+              thumbnails[item.id] = photoService.getPhotoUrl(editRecord, 'result_image', '300x0');
+              continue;
+            }
+          } catch (editError) {
+            console.warn(`Could not fetch edit ${item.editId}, trying original photo`);
+          }
+        }
+        
+        // Fallback to original photo
+        if (item.photoId) {
+          try {
+            const photoRecord = await photoService.pb.collection('printapic_photos').getOne(item.photoId);
+            if (photoRecord.image) {
+              thumbnails[item.id] = photoService.getPhotoUrl(photoRecord, 'image', '300x0');
+            }
+          } catch (photoError) {
+            console.warn(`Could not fetch photo ${item.photoId}`);
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading thumbnail for cart item ${item.id}:`, error);
+      }
+    }
+    
+    setPhotoThumbnails(thumbnails);
   };
 
   const loadUserTokens = async () => {
@@ -124,8 +168,21 @@ const Cart = () => {
             <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
               {/* Photo preview and info */}
               <div className="flex items-center gap-3 flex-1">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-base-300 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <ShoppingCart size={20} className="text-base-content/50" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-base-300 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {photoThumbnails[item.id] ? (
+                    <img 
+                      src={photoThumbnails[item.id]} 
+                      alt="Photo thumbnail"
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className="w-full h-full flex items-center justify-center" style={{ display: photoThumbnails[item.id] ? 'none' : 'flex' }}>
+                    <ShoppingCart size={20} className="text-base-content/50" />
+                  </div>
                 </div>
                 
                 <div className="flex-1 min-w-0">

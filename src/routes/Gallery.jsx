@@ -345,7 +345,7 @@ const Gallery = () => {
     }
     
     setPhotos(prev => prev.filter(photo => !photoIds.includes(photo.id)));
-    clearSelection();
+    toggleSelectionMode();
     triggerHapticFeedback('success');
   };
 

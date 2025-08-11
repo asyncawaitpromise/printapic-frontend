@@ -139,6 +139,13 @@ const PhotoView = () => {
     };
   }, []);
 
+  // Clear processing state when navigating to a different photo
+  useEffect(() => {
+    if (photo?.id) {
+      resetApiProcessing();
+    }
+  }, [photo?.id]);
+
   // Calculate photo index for navigation
   const photoIndex = photos.findIndex(p => p.id === photo?.id) || 0;
   

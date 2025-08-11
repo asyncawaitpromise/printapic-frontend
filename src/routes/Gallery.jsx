@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Image, Camera as CameraIcon, CheckSquare, Square, Cloud, RefreshCw, AlertCircle } from 'react-feather';
 import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
@@ -21,6 +21,14 @@ const Gallery = () => {
   const [loading, setLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState('idle');
   const [lastSyncTime, setLastSyncTime] = useState(null);
+  
+  // Ref to access current photos state inside subscriptions without causing re-renders
+  const photosRef = useRef([]);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
   
   // Sticker processing
   const {
@@ -217,6 +225,124 @@ const Gallery = () => {
       if (unsubscribe) unsubscribe();
     };
   }, [loadPhotos]);
+
+  // Subscribe to PocketBase collection changes for real-time updates
+  useEffect(() => {
+    let unsubscribePhotos = null;
+    let unsubscribeEdits = null;
+    
+    const setupSubscriptions = async () => {
+      if (!authService.isAuthenticated) {
+        console.log('🔄 Not authenticated, skipping PocketBase subscriptions');
+        return;
+      }
+
+      const userId = authService.currentUser?.id;
+      if (!userId) {
+        console.log('🔄 No user ID available for subscriptions');
+        return;
+      }
+
+      try {
+        console.log('🔄 Setting up PocketBase subscriptions for user:', userId);
+        
+        // Subscribe to printapic_photos collection
+        unsubscribePhotos = await authService.pb.collection('printapic_photos').subscribe('*', (e) => {
+          console.log('🔄 Real-time update from printapic_photos:', e.action, e.record?.id);
+          
+          // Only update if this change affects the current user's photos
+          if (e.record?.user === userId) {
+            const newPhoto = photoService._formatPhotoRecord(e.record, null, 'photos');
+            
+            if (e.action === 'create') {
+              console.log('📸 New photo created, adding to gallery:', newPhoto.id);
+              setPhotos(prev => {
+                // Avoid duplicates
+                if (prev.some(p => p.pbId === newPhoto.pbId)) {
+                  return prev;
+                }
+                return [newPhoto, ...prev];
+              });
+              
+              // Update cache
+              const currentPhotos = photosRef.current;
+              const updatedPhotos = [newPhoto, ...currentPhotos.filter(p => p.pbId !== newPhoto.pbId)];
+              photoCacheService.setPhotos(updatedPhotos, userId);
+              
+            } else if (e.action === 'update') {
+              console.log('📝 Photo updated, refreshing in gallery:', newPhoto.id);
+              setPhotos(prev => prev.map(p => 
+                p.pbId === newPhoto.pbId ? { ...p, ...newPhoto } : p
+              ));
+              
+            } else if (e.action === 'delete') {
+              console.log('🗑️ Photo deleted, removing from gallery:', e.record.id);
+              setPhotos(prev => prev.filter(p => p.pbId !== e.record.id));
+              
+              // Update cache
+              const updatedPhotos = photosRef.current.filter(p => p.pbId !== e.record.id);
+              photoCacheService.setPhotos(updatedPhotos, userId);
+            }
+          }
+        });
+        
+        // Subscribe to printapic_edits collection for processed photos
+        unsubscribeEdits = await authService.pb.collection('printapic_edits').subscribe('*', (e) => {
+          console.log('🔄 Real-time update from printapic_edits:', e.action, e.record?.id);
+          
+          // Only update if this change affects the current user's edits and is completed
+          if (e.record?.user === userId && e.record?.status === 'done' && e.record?.result_image) {
+            const processedPhoto = photoService._formatEditRecord(e.record);
+            
+            if (e.action === 'create') {
+              console.log('🎨 New processed photo created, adding to gallery:', processedPhoto.id);
+              setPhotos(prev => {
+                // Avoid duplicates
+                if (prev.some(p => p.pbId === processedPhoto.pbId && p.collectionType === 'edits')) {
+                  return prev;
+                }
+                return [processedPhoto, ...prev];
+              });
+              
+            } else if (e.action === 'update') {
+              console.log('📝 Processed photo updated, refreshing in gallery:', processedPhoto.id);
+              setPhotos(prev => prev.map(p => 
+                (p.pbId === processedPhoto.pbId && p.collectionType === 'edits') 
+                  ? { ...p, ...processedPhoto } 
+                  : p
+              ));
+              
+            } else if (e.action === 'delete') {
+              console.log('🗑️ Processed photo deleted, removing from gallery:', e.record.id);
+              setPhotos(prev => prev.filter(p => 
+                !(p.pbId === e.record.id && p.collectionType === 'edits')
+              ));
+            }
+          }
+        });
+        
+        console.log('✅ PocketBase subscriptions established successfully');
+        
+      } catch (error) {
+        console.error('❌ Failed to setup PocketBase subscriptions:', error);
+      }
+    };
+
+    // Setup subscriptions when authenticated
+    setupSubscriptions();
+
+    // Cleanup function
+    return () => {
+      if (unsubscribePhotos) {
+        console.log('🔄 Unsubscribing from printapic_photos updates');
+        unsubscribePhotos();
+      }
+      if (unsubscribeEdits) {
+        console.log('🔄 Unsubscribing from printapic_edits updates');
+        unsubscribeEdits();
+      }
+    };
+  }, [authService.isAuthenticated]); // Re-run when auth state changes
 
   // Only save to localStorage when user is not authenticated (offline fallback)
   useEffect(() => {

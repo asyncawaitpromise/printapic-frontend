@@ -6,6 +6,7 @@ import { orderService } from '../services/orderService.js';
 import { photoService } from '../services/photoService.js';
 import { PRINT_SIZES, createShippingAddress, ORDER_STATUS_LABELS } from '../types/orderTypes.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import BottomNavbar from '../components/BottomNavbar.jsx';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -574,6 +575,9 @@ const Cart = () => {
           </div>
         )}
       </div>
+      
+      {/* Bottom Navigation */}
+      <BottomNavbar />
     </div>
   );
 };

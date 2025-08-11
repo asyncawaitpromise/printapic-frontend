@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Settings, Camera, CreditCard, Image, ShoppingCart } from 'react-feather';
+import { LogOut, Camera, CreditCard, Image, ShoppingCart } from 'react-feather';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { cartService } from '../services/cartService.js';
@@ -84,13 +84,13 @@ const BottomNavbar = () => {
       >
         <Camera size={22} />
       </Link>
-      <button 
-        onClick={() => navigate('/settings')}
-        className={isActive('/settings') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
-        title="Settings"
+      <Link 
+        to="/pricing"
+        className={isActive('/pricing') ? 'active text-primary' : 'text-base-content/70 hover:text-primary'}
+        title="Buy Tokens"
       >
-        <Settings size={22} />
-      </button>
+        <CreditCard size={22} />
+      </Link>
       <button 
         onClick={handleLogout}
         className="text-base-content/70 hover:text-error"

@@ -22,7 +22,8 @@ const PhotoView = () => {
     isProcessing: false,
     error: null,
     message: '',
-    currentEffect: null
+    currentEffect: null,
+    processingButton: null
   });
   const [userTokens, setUserTokens] = useState(0);
   const [showAddToOrderModal, setShowAddToOrderModal] = useState(false);
@@ -255,7 +256,8 @@ const PhotoView = () => {
         isProcessing: true,
         error: null,
         message: 'Starting AI processing...',
-        currentEffect: promptKey
+        currentEffect: promptKey,
+        processingButton: promptKey
       });
 
       const result = await imageProcessingService.processImage(
@@ -269,7 +271,8 @@ const PhotoView = () => {
               isProcessing: false,
               error: null,
               message: statusUpdate.message,
-              currentEffect: null
+              currentEffect: null,
+              processingButton: null
             });
             
             imageProcessingService.getUserTokenBalance().then(setUserTokens);
@@ -283,7 +286,8 @@ const PhotoView = () => {
               isProcessing: false,
               error: statusUpdate.message,
               message: '',
-              currentEffect: null
+              currentEffect: null,
+              processingButton: null
             });
           } else {
             setApiProcessingState(prev => ({
@@ -305,7 +309,8 @@ const PhotoView = () => {
         isProcessing: false,
         error: err.message,
         message: '',
-        currentEffect: null
+        currentEffect: null,
+        processingButton: null
       });
     }
   };
@@ -316,7 +321,8 @@ const PhotoView = () => {
       isProcessing: false,
       error: null,
       message: '',
-      currentEffect: null
+      currentEffect: null,
+      processingButton: null
     });
     imageProcessingService.cleanupAll();
   };
@@ -409,7 +415,8 @@ const PhotoView = () => {
       'oil-painting': Star
     };
 
-    const isDisabled = apiProcessingState.isProcessing || 
+    const isThisButtonProcessing = apiProcessingState.processingButton === style.key;
+    const isDisabled = isThisButtonProcessing || 
                       isStickerProcessing || 
                       (!photo.pbId && !photo.hasRemote) ||
                       userTokens < 1;
@@ -419,7 +426,7 @@ const PhotoView = () => {
       tooltip = 'Photo must be synced to cloud first';
     } else if (userTokens < 1) {
       tooltip = 'Insufficient tokens (1 token required)';
-    } else if (apiProcessingState.isProcessing) {
+    } else if (isThisButtonProcessing) {
       tooltip = 'Processing in progress...';
     }
 
@@ -433,7 +440,8 @@ const PhotoView = () => {
       disabled: isDisabled,
       className: style.key === 'sticker' ? 'btn-primary' : 'btn-secondary',
       tooltip: tooltip,
-      tokensRequired: 1
+      tokensRequired: 1,
+      isProcessing: isThisButtonProcessing
     };
   });
 
@@ -446,7 +454,8 @@ const PhotoView = () => {
       'medieval-knight': Shield
     };
 
-    const isDisabled = apiProcessingState.isProcessing || 
+    const isThisButtonProcessing = apiProcessingState.processingButton === style.key;
+    const isDisabled = isThisButtonProcessing || 
                       isStickerProcessing || 
                       (!photo.pbId && !photo.hasRemote) ||
                       userTokens < 1;
@@ -456,7 +465,7 @@ const PhotoView = () => {
       tooltip = 'Photo must be synced to cloud first';
     } else if (userTokens < 1) {
       tooltip = 'Insufficient tokens (1 token required)';
-    } else if (apiProcessingState.isProcessing) {
+    } else if (isThisButtonProcessing) {
       tooltip = 'Processing in progress...';
     }
 
@@ -470,7 +479,8 @@ const PhotoView = () => {
       disabled: isDisabled,
       className: 'btn-accent',
       tooltip: tooltip,
-      tokensRequired: 1
+      tokensRequired: 1,
+      isProcessing: isThisButtonProcessing
     };
   });
 
@@ -606,14 +616,6 @@ const PhotoView = () => {
                 </div>
               )}
               
-              {apiProcessingState.isProcessing && (
-                <div className="alert alert-info mb-3">
-                  <div className="loading loading-spinner loading-sm"></div>
-                  <span className="text-sm">
-                    {apiProcessingState.message || 'Processing your image...'}
-                  </span>
-                </div>
-              )}
               
               {apiProcessingState.message && !apiProcessingState.isProcessing && !apiProcessingState.error && (
                 <div className="alert alert-success mb-3">
@@ -628,12 +630,16 @@ const PhotoView = () => {
                   return (
                     <button
                       key={option.id}
-                      className={`btn btn-sm gap-1 ${option.className} ${option.disabled ? 'btn-disabled' : ''} flex-col h-auto py-3`}
+                      className={`btn btn-sm gap-1 ${option.className} ${option.disabled ? 'btn-disabled' : ''} flex-col h-auto py-3 relative`}
                       onClick={option.action}
                       disabled={option.disabled}
                       title={option.tooltip}
                     >
-                      <IconComponent size={16} />
+                      {option.isProcessing ? (
+                        <span className="loading loading-spinner loading-sm"></span>
+                      ) : (
+                        <IconComponent size={16} />
+                      )}
                       <span className="text-xs leading-tight text-center">
                         {option.label}
                       </span>
@@ -664,12 +670,16 @@ const PhotoView = () => {
                   return (
                     <button
                       key={option.id}
-                      className={`btn btn-sm gap-1 ${option.className} ${option.disabled ? 'btn-disabled' : ''} flex-col h-auto py-3`}
+                      className={`btn btn-sm gap-1 ${option.className} ${option.disabled ? 'btn-disabled' : ''} flex-col h-auto py-3 relative`}
                       onClick={option.action}
                       disabled={option.disabled}
                       title={option.tooltip}
                     >
-                      <IconComponent size={16} />
+                      {option.isProcessing ? (
+                        <span className="loading loading-spinner loading-sm"></span>
+                      ) : (
+                        <IconComponent size={16} />
+                      )}
                       <span className="text-xs leading-tight text-center">
                         {option.label}
                       </span>

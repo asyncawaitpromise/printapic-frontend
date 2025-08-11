@@ -23,7 +23,7 @@ const PhotoView = () => {
     error: null,
     message: '',
     currentEffect: null,
-    processingButton: null
+    processingButtons: new Set()
   });
   const [userTokens, setUserTokens] = useState(0);
   const [showAddToOrderModal, setShowAddToOrderModal] = useState(false);
@@ -252,13 +252,14 @@ const PhotoView = () => {
     }
 
     try {
-      setApiProcessingState({
+      setApiProcessingState(prev => ({
+        ...prev,
         isProcessing: true,
         error: null,
         message: 'Starting AI processing...',
         currentEffect: promptKey,
-        processingButton: promptKey
-      });
+        processingButtons: new Set([...prev.processingButtons, promptKey])
+      }));
 
       const result = await imageProcessingService.processImage(
         photo.pbId, 
@@ -267,12 +268,17 @@ const PhotoView = () => {
           console.log('Processing status update:', statusUpdate);
           
           if (statusUpdate.status === 'complete') {
-            setApiProcessingState({
-              isProcessing: false,
-              error: null,
-              message: statusUpdate.message,
-              currentEffect: null,
-              processingButton: null
+            setApiProcessingState(prev => {
+              const newProcessingButtons = new Set(prev.processingButtons);
+              newProcessingButtons.delete(promptKey);
+              return {
+                ...prev,
+                isProcessing: newProcessingButtons.size > 0,
+                error: null,
+                message: statusUpdate.message,
+                currentEffect: null,
+                processingButtons: newProcessingButtons
+              };
             });
             
             imageProcessingService.getUserTokenBalance().then(setUserTokens);
@@ -282,12 +288,17 @@ const PhotoView = () => {
             }
             
           } else if (statusUpdate.status === 'error') {
-            setApiProcessingState({
-              isProcessing: false,
-              error: statusUpdate.message,
-              message: '',
-              currentEffect: null,
-              processingButton: null
+            setApiProcessingState(prev => {
+              const newProcessingButtons = new Set(prev.processingButtons);
+              newProcessingButtons.delete(promptKey);
+              return {
+                ...prev,
+                isProcessing: newProcessingButtons.size > 0,
+                error: statusUpdate.message,
+                message: '',
+                currentEffect: null,
+                processingButtons: newProcessingButtons
+              };
             });
           } else {
             setApiProcessingState(prev => ({
@@ -305,12 +316,17 @@ const PhotoView = () => {
 
     } catch (err) {
       console.error('Failed to start artistic effect:', err);
-      setApiProcessingState({
-        isProcessing: false,
-        error: err.message,
-        message: '',
-        currentEffect: null,
-        processingButton: null
+      setApiProcessingState(prev => {
+        const newProcessingButtons = new Set(prev.processingButtons);
+        newProcessingButtons.delete(promptKey);
+        return {
+          ...prev,
+          isProcessing: newProcessingButtons.size > 0,
+          error: err.message,
+          message: '',
+          currentEffect: null,
+          processingButtons: newProcessingButtons
+        };
       });
     }
   };
@@ -322,7 +338,7 @@ const PhotoView = () => {
       error: null,
       message: '',
       currentEffect: null,
-      processingButton: null
+      processingButtons: new Set()
     });
     imageProcessingService.cleanupAll();
   };
@@ -415,7 +431,7 @@ const PhotoView = () => {
       'oil-painting': Star
     };
 
-    const isThisButtonProcessing = apiProcessingState.processingButton === style.key;
+    const isThisButtonProcessing = apiProcessingState.processingButtons.has(style.key);
     const isDisabled = isThisButtonProcessing || 
                       isStickerProcessing || 
                       (!photo.pbId && !photo.hasRemote) ||
@@ -454,7 +470,7 @@ const PhotoView = () => {
       'medieval-knight': Shield
     };
 
-    const isThisButtonProcessing = apiProcessingState.processingButton === style.key;
+    const isThisButtonProcessing = apiProcessingState.processingButtons.has(style.key);
     const isDisabled = isThisButtonProcessing || 
                       isStickerProcessing || 
                       (!photo.pbId && !photo.hasRemote) ||

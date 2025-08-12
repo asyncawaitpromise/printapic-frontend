@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Image, Camera as CameraIcon, CheckSquare, Square, Cloud, RefreshCw, AlertCircle } from 'react-feather';
-import { useNavigate, Link, useBlocker } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
 import PhotoStats from '../components/PhotoStats';
 import { useMobilePhotoSelection } from '../hooks/useMobilePhotoSelection';
@@ -58,19 +58,6 @@ const Gallery = () => {
     isPhotoSelected,
     triggerHapticFeedback
   } = useMobilePhotoSelection(photos, 50);
-
-  // Block navigation when in selection mode
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      isSelectionMode && currentLocation.pathname !== nextLocation.pathname
-  );
-
-  // Handle blocked navigation - exit selection mode instead of navigating
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      toggleSelectionMode();
-    }
-  }, [blocker.state, toggleSelectionMode]);
 
   // Handle back navigation when in selection mode
   useEffect(() => {
